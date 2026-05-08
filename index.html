@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор Созвездий</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#0a0e1a;--bg-card:rgba(15,20,40,0.85);--bg-input:rgba(20,28,58,0.9);--a1:#6c5ce7;--a2:#a29bfe;--a3:#00cec9;--a4:#fd79a8;--txt:#e8e8f0;--txt2:#8b8ba8;--brd:rgba(108,92,231,0.3);--glow:rgba(108,92,231,0.4)}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;position:relative;-webkit-tap-highlight-color:transparent}
+        button,input{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+        body::before{content:'';position:fixed;inset:0;background:radial-gradient(1px 1px at 10% 20%,rgba(255,255,255,.8),transparent),radial-gradient(1px 1px at 30% 65%,rgba(255,255,255,.6),transparent),radial-gradient(1.5px 1.5px at 50% 10%,rgba(162,155,254,.9),transparent),radial-gradient(1px 1px at 70% 40%,rgba(255,255,255,.5),transparent),radial-gradient(1px 1px at 85% 75%,rgba(0,206,201,.7),transparent),radial-gradient(1px 1px at 15% 85%,rgba(255,255,255,.4),transparent),radial-gradient(1.5px 1.5px at 92% 15%,rgba(253,121,168,.6),transparent),radial-gradient(1px 1px at 45% 50%,rgba(255,255,255,.5),transparent),radial-gradient(1px 1px at 60% 90%,rgba(162,155,254,.5),transparent),radial-gradient(1px 1px at 5% 55%,rgba(255,255,255,.6),transparent),radial-gradient(1px 1px at 78% 58%,rgba(255,255,255,.4),transparent),radial-gradient(1.2px 1.2px at 22% 42%,rgba(0,206,201,.5),transparent);pointer-events:none;z-index:0}
+        .container{position:relative;z-index:1;width:100%;max-width:420px;padding:20px 16px;display:flex;flex-direction:column;gap:16px}
+        .header{text-align:center;padding:8px 0}
+        .header h1{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:700;background:linear-gradient(135deg,var(--a2),var(--a3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px;text-transform:uppercase}
+        .header p{font-size:.75rem;color:var(--txt2);margin-top:4px;letter-spacing:1px}
+        /* Toggle 6/12 */
+        .toggle-row{display:flex;justify-content:center;gap:0;margin-top:8px}
+        .toggle-btn{padding:8px 18px;font-family:'Orbitron',sans-serif;font-size:.65rem;font-weight:700;border:1px solid var(--brd);background:transparent;color:var(--txt2);cursor:pointer;transition:all .2s;letter-spacing:1px;touch-action:manipulation}
+        .toggle-btn:first-child{border-radius:8px 0 0 8px}
+        .toggle-btn:last-child{border-radius:0 8px 8px 0}
+        .toggle-btn.active{background:linear-gradient(135deg,var(--a1),#8b5cf6);color:#fff;border-color:var(--a1)}
+        /* Cards */
+        .card{background:var(--bg-card);border:1px solid var(--brd);border-radius:16px;padding:20px;box-shadow:0 4px 30px rgba(0,0,0,.3)}
+        .card-title{font-family:'Orbitron',sans-serif;font-size:.75rem;color:var(--a3);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;text-align:center}
+        .input-label{display:block;font-size:.8rem;color:var(--txt2);margin-bottom:10px;letter-spacing:.5px}
+        .input-row{display:flex;gap:10px}
+        .input-field{flex:1;background:var(--bg-input);border:1px solid var(--brd);border-radius:12px;padding:14px 16px;color:var(--txt);font-family:'Orbitron',sans-serif;font-size:1.1rem;text-align:center;letter-spacing:3px;outline:none;transition:border-color .3s,box-shadow .3s}
+        .input-field::placeholder{color:rgba(139,139,168,.5);font-size:.85rem;letter-spacing:1px}
+        .input-field:focus{border-color:var(--a1);box-shadow:0 0 20px var(--glow)}
+        .btn-calc{background:linear-gradient(135deg,var(--a1),#8b5cf6);border:none;border-radius:12px;padding:14px 24px;color:#fff;font-family:'Inter',sans-serif;font-weight:600;font-size:.95rem;cursor:pointer;transition:transform .2s,box-shadow .2s;white-space:nowrap}
+        .btn-calc:hover{transform:translateY(-1px);box-shadow:0 4px 20px var(--glow)}
+        .btn-calc:active{transform:scale(.97)}
+        /* Results */
+        .results-card{background:var(--bg-card);border:1px solid var(--brd);border-radius:16px;padding:16px;box-shadow:0 4px 30px rgba(0,0,0,.3);display:none}
+        .results-card.visible{display:block;animation:fadeIn .4s ease}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .results-title{font-family:'Orbitron',sans-serif;font-size:.8rem;color:var(--a3);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;text-align:center}
+        .result-row{display:flex;align-items:center;padding:8px 10px;border-radius:10px;transition:background .2s;animation:slideIn .3s ease backwards;flex-wrap:wrap}
+        .result-row:nth-child(even){background:rgba(108,92,231,.06)}
+        .result-row:hover{background:rgba(108,92,231,.12)}
+        .result-row.hidden-row{display:none}
+        @keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+        .result-num{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:.65rem;font-weight:700;margin-right:8px;flex-shrink:0;color:#fff}
+        .badge-1{background:linear-gradient(135deg,#6c5ce7,#8b5cf6)}.badge-2{background:linear-gradient(135deg,#4c6ef5,#5c7cfa)}.badge-3{background:linear-gradient(135deg,#0ca678,#20c997)}.badge-4{background:linear-gradient(135deg,#0891b2,#22d3ee)}.badge-5{background:linear-gradient(135deg,#e67700,#fab005)}.badge-6{background:linear-gradient(135deg,#d63939,#ff6b6b)}.badge-7{background:linear-gradient(135deg,#ae3ec9,#cc5de8)}.badge-8{background:linear-gradient(135deg,#2b8a3e,#51cf66)}.badge-9{background:linear-gradient(135deg,#e8590c,#ff922b)}.badge-10{background:linear-gradient(135deg,#d6336c,#f06595)}.badge-11{background:linear-gradient(135deg,#1971c2,#4dabf7)}.badge-12{background:linear-gradient(135deg,#5f3dc4,#9775fa)}
+        /* Individual columns in constructor */
+        .col-individual{font-family:'Orbitron',sans-serif;font-size:.8rem;font-weight:400;color:rgba(139,139,168,.45);min-width:32px;text-align:center;flex-shrink:0}
+        .col-sep{color:rgba(139,139,168,.25);font-size:.7rem;margin:0 2px;flex-shrink:0}
+        .result-value{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--txt);flex:1;text-align:right;cursor:pointer;transition:color .2s}
+        .result-value:hover{color:var(--a3)}
+        .result-original{font-family:'Inter',sans-serif;font-size:.65rem;font-weight:400;color:var(--txt2);margin-left:5px;opacity:.7;flex-shrink:0}
+        .orig-individual{font-size:.55rem;color:rgba(139,139,168,.35)}
+        /* Constellation tooltip */
+        .constellation-tip{width:100%;padding:6px 10px 4px 46px;font-family:'Inter',sans-serif;font-size:.75rem;color:var(--a3);line-height:1.4;display:none;animation:fadeIn .25s ease}
+        .constellation-tip.open{display:block}
+        .constellation-tip .cname{font-weight:600;color:var(--a2)}
+        .constellation-tip .cdesc{color:var(--txt2);margin-left:4px}
+        /* Search */
+        .search-card{background:var(--bg-card);border:1px solid var(--brd);border-radius:16px;padding:16px;backdrop-filter:blur(12px);box-shadow:0 4px 30px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05)}
+        .search-input{width:100%;background:var(--bg-input);border:1px solid var(--brd);border-radius:12px;padding:12px 16px;color:var(--txt);font-family:'Orbitron',sans-serif;font-size:1rem;text-align:center;letter-spacing:3px;outline:none;transition:border-color .3s,box-shadow .3s}
+        .search-input:focus{border-color:var(--a1);box-shadow:0 0 20px var(--glow)}
+        .search-input::placeholder{color:rgba(139,139,168,.5);font-size:.8rem;letter-spacing:1px;font-family:'Inter',sans-serif}
+        .search-result{margin-top:12px;padding:12px;border-radius:10px;background:rgba(108,92,231,.08);display:none;animation:fadeIn .3s ease}
+        .search-result.visible{display:block}
+        .search-result .sr-num{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:700;color:var(--a2)}
+        .search-result .sr-name{font-family:'Inter',sans-serif;font-size:1rem;font-weight:600;color:var(--a3);margin-left:8px}
+        .search-result .sr-desc{font-family:'Inter',sans-serif;font-size:.85rem;color:var(--txt2);margin-top:6px;line-height:1.5}
+        .search-result .sr-empty{font-family:'Inter',sans-serif;font-size:.85rem;color:rgba(139,139,168,.5);font-style:italic}
+
+        /* Error */
+        .error-msg{color:var(--a4);font-size:.8rem;text-align:center;margin-top:8px;display:none}
+        .error-msg.visible{display:block;animation:shake .4s ease}
+        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+        .divider{height:1px;background:linear-gradient(90deg,transparent,var(--brd),transparent);margin:4px 0}
+        /* Constructor */
+        .constructor-entry{display:flex;gap:8px;align-items:center;margin-bottom:10px;animation:fadeIn .3s ease}
+        .constructor-entry .input-field{font-size:.95rem;padding:12px 10px;letter-spacing:2px}
+        .entry-type-badge{font-family:'Orbitron',sans-serif;font-size:.55rem;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap;flex-shrink:0;letter-spacing:1px}
+        .entry-type-badge.type-birth{background:rgba(0,206,201,.2);color:var(--a3);border:1px solid rgba(0,206,201,.3)}
+        .entry-type-badge.type-question{background:rgba(253,121,168,.2);color:var(--a4);border:1px solid rgba(253,121,168,.3)}
+        .btn-remove{width:32px;height:32px;border-radius:8px;border:1px solid rgba(255,100,100,.3);background:rgba(255,50,50,.1);color:#ff6b6b;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+        .btn-remove:hover{background:rgba(255,50,50,.25)}
+        .add-buttons{display:flex;gap:8px;margin-top:4px;margin-bottom:12px}
+        .btn-add{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 12px;border-radius:10px;border:1px dashed var(--brd);background:transparent;color:var(--txt2);font-family:'Inter',sans-serif;font-size:.75rem;cursor:pointer;transition:all .2s}
+        .btn-add:hover{border-color:var(--a2);color:var(--a2);background:rgba(108,92,231,.08)}
+        .btn-add .plus{font-size:1rem;font-weight:700;line-height:1}
+        .footer{text-align:center;padding:12px;font-size:.65rem;color:rgba(139,139,168,.4);letter-spacing:1px}
+        @media(max-width:380px){.container{padding:12px 10px}.input-field{font-size:.9rem!important;padding:10px 8px!important}.header h1{font-size:1.1rem}.entry-type-badge{font-size:.5rem;padding:3px 6px}.col-individual{font-size:.7rem;min-width:26px}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✦ Созвездия ✦</h1>
+            <p>Калькулятор созвездий</p>
+            <div class="toggle-row">
+                <button class="toggle-btn active" onclick="setHouses(6)">6 домов</button>
+                <button class="toggle-btn" onclick="setHouses(12)">12 домов</button>
+            </div>
+        </div>
+
+        <!-- Поиск созвездия -->
+        <div class="search-card">
+            <div class="card-title">🔭 Справочник созвездий</div>
+            <input type="text" id="search-input" class="search-input" placeholder="Введите номер (1–88)" inputmode="numeric" autocomplete="off">
+            <div class="search-result" id="search-result"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Конструктор -->
+        <div class="card">
+            <div class="card-title">Конструктор</div>
+            <div id="constructor-entries"></div>
+            <div class="add-buttons">
+                <button class="btn-add" onclick="addEntry('birth')"><span class="plus">+</span> Дата рождения</button>
+                <button class="btn-add" onclick="addEntry('question')"><span class="plus">+</span> Время вопроса</button>
+            </div>
+            <button class="btn-calc" style="width:100%" onclick="calculateConstructor()">✦ Рассчитать</button>
+            <div class="error-msg" id="error-constructor"></div>
+        </div>
+        <div class="results-card" id="results-constructor">
+            <div class="results-title">Конструктор</div>
+            <div id="results-list-constructor"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Дата рождения -->
+        <div class="card">
+            <div class="card-title">Дата рождения</div>
+            <label class="input-label" for="date-input">Формат: ДД.ММ.ГГГГ</label>
+            <div class="input-row">
+                <input type="text" id="date-input" class="input-field" placeholder="07.05.1984" inputmode="text" autocomplete="off">
+                <button class="btn-calc" onclick="calculateDate()">✦</button>
+            </div>
+            <div class="error-msg" id="error-date"></div>
+        </div>
+        <div class="results-card" id="results-date">
+            <div class="results-title">Дата рождения</div>
+            <div id="results-list-date"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Время вопроса -->
+        <div class="card">
+            <div class="card-title">Дата и время вопроса</div>
+            <label class="input-label" for="datetime-input">Формат: ДД.ММ ЧЧ:ММ</label>
+            <div class="input-row">
+                <input type="text" id="datetime-input" class="input-field" placeholder="06.05 12:44" inputmode="text" autocomplete="off">
+                <button class="btn-calc" onclick="calculateDateTime()">✦</button>
+            </div>
+            <div class="error-msg" id="error-datetime"></div>
+        </div>
+        <div class="results-card" id="results-datetime">
+            <div class="results-title">Время вопроса</div>
+            <div id="results-list-datetime"></div>
+        </div>
+
+        <div class="footer">CONSTELLATION CALCULATOR v1.0</div>
+    </div>
+
+    <script>
+        "use strict";
+        // ═══ Справочник созвездий ═══
+        const CONSTELLATIONS = {
+            1: ['Андромеда', 'Да. Управление, люди слушают, освобождение от старого.'],
+            2: ['Антлия', 'Нет. Одиночество в отношениях, уход ненужного.'],
+            3: ['Апус', 'Да. Красота и свобода, красивые люди, свободные отношения, развод (при вопросе о разводе).'],
+            4: ['Водолей', 'Да, но'],
+            5: ['Орёл', 'Да'],
+            6: ['Жертвенник', 'Нет'],
+            7: ['Овен', 'Да'],
+            8: ['Возничий', 'Нет'],
+            9: ['Волопас', 'Да, но нужен совет'],
+            10: ['Резец', 'Да'],
+            11: ['Жираф', 'Да'],
+            12: ['Рак', 'И да, и нет. Выбор зависит от вас'],
+            13: ['Гончие псы', 'Нет'],
+            14: ['Большой пёс', 'Да'],
+            15: ['Малый пёс', 'Нет'],
+            16: ['Козерог', 'Да, но нужны усилия'],
+            17: ['Киль', 'Да'],
+            18: ['Кассиопея', 'Да, но позже'],
+            19: ['Кентавр', 'Да'],
+            20: ['Цефей', 'Да, но значительно позже'],
+            21: ['Кит', 'Да.'],
+            22: ['Хамелеон', 'Событие непредсказуемо'],
+            23: ['Циркуль', 'Да'],
+            24: ['Голубь', 'Да'],
+            25: ['Волосы Вероники', 'Да, это предначертано'],
+            26: ['Южная Корона', 'Да'],
+            27: ['Северная Корона', 'Да'],
+            28: ['Ворон', 'Да'],
+            29: ['Кратер', 'Да'],
+            30: ['Южный треугольник', 'Смотря какую дорогу выберете'],
+            31: ['Лебедь', 'Да'],
+            32: ['Дельфин', 'Да'],
+            33: ['Золотая рыба', 'Да'],
+            34: ['Дракон', 'Да, но придется сильно измениться. Серьезные люди, травматичность.'],
+            35: ['Малый конь', 'Да, но не сейчас'],
+            36: ['Эридан', 'Нет'],
+            37: ['Печь', 'Да и очень быстро.'],
+            38: ['Близнецы', 'Да'],
+            39: ['Журавль', 'Да'],
+            40: ['Геркулес', 'Да'],
+            41: ['Часы', 'Сейчас нет, нужно подождать'],
+            42: ['Гидра', 'Нет'],
+            43: ['Южная гидра', 'Да'],
+            44: ['Индеец', 'Да и очень скоро']
+        };
+
+        function getConstellation(n) {
+            return CONSTELLATIONS[n] || null;
+        }
+
+        let showHouses = 6;
+
+        function setHouses(n) {
+            showHouses = n;
+            document.querySelectorAll('.toggle-btn').forEach((b, i) => {
+                b.classList.toggle('active', (i === 0 && n === 6) || (i === 1 && n === 12));
+            });
+            document.querySelectorAll('.result-row').forEach(row => {
+                const idx = parseInt(row.dataset.idx);
+                row.classList.toggle('hidden-row', idx > showHouses);
+            });
+        }
+
+        function digitSum(n) {
+            return Math.abs(n).toString().split('').reduce((s, d) => s + parseInt(d), 0);
+        }
+
+        function formatOriginal(n) {
+            const s = n.toString();
+            return s.length >= 3 ? s.substring(0, 2) + '.' + s.substring(2) : s;
+        }
+
+        function reduce88(n) {
+            if (n <= 88) return { value: n, original: null };
+            const orig = formatOriginal(n);
+            while (n > 88) {
+                const s = n.toString();
+                n = s.length >= 3 ? parseInt(s.substring(0, 2)) + parseInt(s.substring(2)) : digitSum(n);
+            }
+            return { value: n, original: orig };
+        }
+
+        function val(r) { return r.value; }
+
+        function compute12(day, part1Sum, part2Sum) {
+            const N = new Array(13);
+            N[1] = reduce88(part1Sum + part2Sum);
+            N[2] = reduce88(digitSum(val(N[1])));
+            N[3] = reduce88(val(N[1]) - day * 2);
+            N[4] = reduce88(digitSum(Math.abs(val(N[3]))));
+            N[5]  = reduce88(val(N[1]) + val(N[3]));
+            N[6]  = reduce88(val(N[2]) + val(N[4]));
+            N[7]  = reduce88(val(N[3]) + val(N[5]));
+            N[8]  = reduce88(val(N[4]) + val(N[6]));
+            N[9]  = reduce88(val(N[5]) + val(N[7]));
+            N[10] = reduce88(val(N[6]) + val(N[8]));
+            N[11] = reduce88(val(N[7]) + val(N[9]));
+            N[12] = reduce88(val(N[8]) + val(N[10]));
+            return N;
+        }
+
+        function renderResults(nums, listEl, cardEl, individualSets) {
+            listEl.innerHTML = '';
+            for (var i = 1; i <= 12; i++) {
+                var row = document.createElement('div');
+                row.className = 'result-row' + (i > showHouses ? ' hidden-row' : '');
+                row.dataset.idx = i;
+                row.style.animationDelay = (i - 1) * 0.04 + 's';
+                var cols = '';
+                if (individualSets && individualSets.length > 0) {
+                    for (var j = 0; j < individualSets.length; j++) {
+                        var iv = individualSets[j][i];
+                        var io = iv.original ? '<span class="orig-individual">(' + iv.original + ')</span>' : '';
+                        cols += '<span class="col-individual">' + iv.value + io + '</span>';
+                        if (j < individualSets.length - 1) cols += '<span class="col-sep">+</span>';
+                    }
+                    cols += '<span class="col-sep">=</span>';
+                }
+                var orig = nums[i].original ? '<span class="result-original">(' + nums[i].original + ')</span>' : '';
+                row.innerHTML = '<div class="result-num badge-' + i + '">' + i + '</div>' + cols + '<span class="result-value" onclick="showTip(this,' + nums[i].value + ')">' + nums[i].value + '</span>' + orig + '<div class="constellation-tip"></div>';
+                listEl.appendChild(row);
+            }
+            cardEl.classList.add('visible');
+        }
+
+        function showTip(el, num) {
+            const tip = el.closest('.result-row').querySelector('.constellation-tip');
+            if (tip.classList.contains('open')) { tip.classList.remove('open'); return; }
+            document.querySelectorAll('.constellation-tip.open').forEach(t => t.classList.remove('open'));
+            const c = getConstellation(num);
+            tip.innerHTML = c ? `<span class="cname">★ ${c[0]}</span><span class="cdesc"> — ${c[1]}</span>` : `<span class="cdesc">Созвездие №${num} — данные пока не добавлены</span>`;
+            tip.classList.add('open');
+        }
+
+        // Search
+        try {
+            document.getElementById('search-input').addEventListener('input', function() {
+                var v = parseInt(this.value.trim());
+                var res = document.getElementById('search-result');
+                if (!v || v < 1 || v > 88) { res.classList.remove('visible'); return; }
+                var c = getConstellation(v);
+                if (c) {
+                    res.innerHTML = '<span class="sr-num">' + v + '.</span><span class="sr-name">' + c[0] + '</span><div class="sr-desc">' + c[1] + '</div>';
+                } else {
+                    res.innerHTML = '<span class="sr-num">' + v + '.</span><span class="sr-empty">Данные пока не добавлены</span>';
+                }
+                res.classList.add('visible');
+            });
+        } catch(e) { console.error('Search init error:', e); }
+
+        // Parsers
+        function parseBirthDate(input) {
+            const m = input.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+            if (!m) return null;
+            const day = parseInt(m[1]), month = parseInt(m[2]), year = parseInt(m[3]);
+            if (day < 1 || day > 31 || month < 1 || month > 12) return null;
+            return { day: parseInt(day.toString()[0]), datePart: digitSum(day) + digitSum(month), extraPart: digitSum(year) };
+        }
+
+        function parseDateTime(input) {
+            const m = input.trim().match(/^(\d{1,2})\.(\d{1,2})\s+(\d{1,2}):(\d{2})$/);
+            if (!m) return null;
+            const day = parseInt(m[1]), month = parseInt(m[2]), hour = parseInt(m[3]), min = parseInt(m[4]);
+            if (day < 1 || day > 31 || month < 1 || month > 12 || hour > 23 || min > 59) return null;
+            return { day: parseInt(day.toString()[0]), datePart: digitSum(day) + digitSum(month), extraPart: digitSum(hour) + digitSum(min) };
+        }
+
+        // Calculator: Date
+        function calculateDate() {
+            const errEl = document.getElementById('error-date');
+            const resCard = document.getElementById('results-date');
+            const resList = document.getElementById('results-list-date');
+            errEl.classList.remove('visible'); resCard.classList.remove('visible');
+            const parsed = parseBirthDate(document.getElementById('date-input').value);
+            if (!parsed) { errEl.textContent = 'Формат: ДД.ММ.ГГГГ'; errEl.classList.add('visible'); return; }
+            renderResults(compute12(parsed.day, parsed.datePart, parsed.extraPart), resList, resCard);
+        }
+
+        // Calculator: DateTime
+        function calculateDateTime() {
+            const errEl = document.getElementById('error-datetime');
+            const resCard = document.getElementById('results-datetime');
+            const resList = document.getElementById('results-list-datetime');
+            errEl.classList.remove('visible'); resCard.classList.remove('visible');
+            const parsed = parseDateTime(document.getElementById('datetime-input').value);
+            if (!parsed) { errEl.textContent = 'Формат: ДД.ММ ЧЧ:ММ'; errEl.classList.add('visible'); return; }
+            renderResults(compute12(parsed.day, parsed.datePart, parsed.extraPart), resList, resCard);
+        }
+
+        // Constructor
+        let entryId = 0;
+
+        function addEntry(type) {
+            entryId++;
+            const container = document.getElementById('constructor-entries');
+            const div = document.createElement('div');
+            div.className = 'constructor-entry';
+            div.id = `entry-${entryId}`;
+            const isBirth = type === 'birth';
+            div.innerHTML = `
+                <span class="entry-type-badge ${isBirth ? 'type-birth' : 'type-question'}">${isBirth ? 'ДР' : 'ВВ'}</span>
+                <input type="text" class="input-field" data-type="${type}" placeholder="${isBirth ? '07.05.1984' : '06.05 12:44'}" inputmode="text" autocomplete="off">
+                <button class="btn-remove" onclick="removeEntry('entry-${entryId}')">×</button>`;
+            div.querySelector('.input-field').addEventListener('keydown', e => { if (e.key === 'Enter') calculateConstructor(); });
+            container.appendChild(div);
+        }
+
+        function removeEntry(id) {
+            const el = document.getElementById(id);
+            if (el) { el.style.animation = 'fadeIn .2s ease reverse'; setTimeout(() => el.remove(), 180); }
+        }
+
+        function calculateConstructor() {
+            const errEl = document.getElementById('error-constructor');
+            const resCard = document.getElementById('results-constructor');
+            const resList = document.getElementById('results-list-constructor');
+            errEl.classList.remove('visible'); resCard.classList.remove('visible');
+
+            const entries = document.querySelectorAll('#constructor-entries .constructor-entry');
+            if (entries.length < 2) { errEl.textContent = 'Добавьте минимум 2 записи'; errEl.classList.add('visible'); return; }
+
+            const allNums = [];
+            for (const entry of entries) {
+                const input = entry.querySelector('.input-field');
+                const type = input.dataset.type;
+                const parsed = type === 'birth' ? parseBirthDate(input.value) : parseDateTime(input.value);
+                if (!parsed) {
+                    errEl.textContent = `Ошибка: проверьте формат (${type === 'birth' ? 'ДД.ММ.ГГГГ' : 'ДД.ММ ЧЧ:ММ'})`;
+                    errEl.classList.add('visible'); input.focus(); return;
+                }
+                allNums.push(compute12(parsed.day, parsed.datePart, parsed.extraPart));
+            }
+
+            // Combine: sum reduced values position-by-position
+            const C = new Array(13);
+            for (let i = 1; i <= 12; i++) {
+                let sum = 0;
+                for (const nums of allNums) sum += val(nums[i]);
+                C[i] = reduce88(sum);
+            }
+
+            renderResults(C, resList, resCard, allNums);
+        }
+
+        // Enter handlers
+        try {
+            document.getElementById('datetime-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') calculateDateTime(); });
+            document.getElementById('date-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') calculateDate(); });
+        } catch(e) { console.error('Enter handler error:', e); }
+
+        // Default 2 birth dates
+        try {
+            addEntry('birth');
+            addEntry('birth');
+        } catch(e) { console.error('Init error:', e); }
+    </script>
+</body>
+</html>
