@@ -67,6 +67,10 @@
         .search-result .sr-name{font-family:'Inter',sans-serif;font-size:1rem;font-weight:600;color:var(--a3);margin-left:8px}
         .search-result .sr-desc{font-family:'Inter',sans-serif;font-size:.85rem;color:var(--txt2);margin-top:6px;line-height:1.5}
         .search-result .sr-empty{font-family:'Inter',sans-serif;font-size:.85rem;color:rgba(139,139,168,.5);font-style:italic}
+        /* Copy button */
+        .btn-copy{display:flex;align-items:center;justify-content:center;gap:5px;margin:10px auto 0;padding:7px 16px;border-radius:8px;border:1px solid var(--brd);background:transparent;color:var(--txt2);font-family:'Inter',sans-serif;font-size:.7rem;cursor:pointer;transition:all .25s}
+        .btn-copy:hover{border-color:var(--a3);color:var(--a3);background:rgba(0,206,201,.08)}
+        .btn-copy.copied{border-color:var(--a3);color:var(--a3);background:rgba(0,206,201,.15)}
 
         /* Error */
         .error-msg{color:var(--a4);font-size:.8rem;text-align:center;margin-top:8px;display:none}
@@ -123,6 +127,7 @@
         <div class="results-card" id="results-constructor">
             <div class="results-title">Конструктор</div>
             <div id="results-list-constructor"></div>
+            <button class="btn-copy" onclick="copyResults('results-list-constructor')">📋 Копировать</button>
         </div>
 
         <div class="divider"></div>
@@ -140,6 +145,7 @@
         <div class="results-card" id="results-date">
             <div class="results-title">Дата рождения</div>
             <div id="results-list-date"></div>
+            <button class="btn-copy" onclick="copyResults('results-list-date')">📋 Копировать</button>
         </div>
 
         <div class="divider"></div>
@@ -157,6 +163,7 @@
         <div class="results-card" id="results-datetime">
             <div class="results-title">Время вопроса</div>
             <div id="results-list-datetime"></div>
+            <button class="btn-copy" onclick="copyResults('results-list-datetime')">📋 Копировать</button>
         </div>
 
         <div class="footer">CONSTELLATION CALCULATOR v1.0</div>
@@ -221,11 +228,11 @@
             53: ['Микроскоп', 'Нет или шансы очень малы.'],
             54: ['Единорог', 'Да. Покой.'],
             55: ['Муха', 'Нет'],
-            56: ['Наугольник', 'Да, если оставишь эмоции'],
-            57: ['Октант', 'Нет'],
-            58: ['Змееносец', 'Да'],
+            56: ['Наугольник- Да, если оставишь эмоции', 'Наугольник- Да, если оставишь эмоции'],
+            57: ['Окстант', 'Нет'],
+            58: ['Змееносец -Да', 'Змееносец -Да'],
             59: ['Орион', 'Да, если'],
-            60: ['Павлин', 'Пожертвование, сам себе мешаешь.'],
+            60: ['Пожертвование, сам себе мешаешь.', 'Пожертвование, сам себе мешаешь.'],
             61: ['Пегас', 'Да'],
             62: ['Персей', 'Да'],
             63: ['Феникс', 'Да'],
@@ -252,8 +259,8 @@
             84: ['Дева', 'Нет'],
             85: ['Летучая рыба', 'Нет'],
             86: ['Лисичка', 'Обман'],
-            87: ['Кармический узел', 'Кармический узел в плюсе'],
-            88: ['Кармический узел', 'Кармический узел в минусе']
+            87: ['Кармический узел в плюсе', 'Кармический узел в плюсе'],
+            88: ['Кармический узел в минусе', 'Кармический узел в минусе']
         };
 
         function getConstellation(n) {
@@ -313,7 +320,10 @@
 
         function renderResults(nums, listEl, cardEl, individualSets) {
             listEl.innerHTML = '';
+            listEl.dataset.values = '';
+            var vals = [];
             for (var i = 1; i <= 12; i++) {
+                vals.push(nums[i].value);
                 var row = document.createElement('div');
                 row.className = 'result-row' + (i > showHouses ? ' hidden-row' : '');
                 row.dataset.idx = i;
@@ -332,7 +342,31 @@
                 row.innerHTML = '<div class="result-num badge-' + i + '">' + i + '</div>' + cols + '<span class="result-value" onclick="showTip(this,' + nums[i].value + ')">' + nums[i].value + '</span>' + orig + '<div class="constellation-tip"></div>';
                 listEl.appendChild(row);
             }
+            listEl.dataset.values = vals.join(' ');
             cardEl.classList.add('visible');
+        }
+
+        function copyResults(listId) {
+            var el = document.getElementById(listId);
+            var text = el.dataset.values || '';
+            if (!text) return;
+            var btn = el.parentElement.querySelector('.btn-copy');
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(function() {
+                    btn.textContent = '✓ Скопировано';
+                    btn.classList.add('copied');
+                    setTimeout(function() { btn.textContent = '📋 Копировать'; btn.classList.remove('copied'); }, 1500);
+                });
+            } else {
+                var ta = document.createElement('textarea');
+                ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                btn.textContent = '✓ Скопировано';
+                btn.classList.add('copied');
+                setTimeout(function() { btn.textContent = '📋 Копировать'; btn.classList.remove('copied'); }, 1500);
+            }
         }
 
         function showTip(el, num) {
