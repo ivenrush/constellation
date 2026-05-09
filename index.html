@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Калькулятор Созвездий</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
     <style>
         *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
         :root{--bg:#0a0e1a;--bg-card:rgba(15,20,40,0.85);--bg-input:rgba(20,28,58,0.9);--a1:#6c5ce7;--a2:#a29bfe;--a3:#00cec9;--a4:#fd79a8;--txt:#e8e8f0;--txt2:#8b8ba8;--brd:rgba(108,92,231,0.3);--glow:rgba(108,92,231,0.4)}
@@ -71,6 +72,14 @@
         .btn-copy{display:flex;align-items:center;justify-content:center;gap:5px;margin:10px auto 0;padding:7px 16px;border-radius:8px;border:1px solid var(--brd);background:transparent;color:var(--txt2);font-family:'Inter',sans-serif;font-size:.7rem;cursor:pointer;transition:all .25s}
         .btn-copy:hover{border-color:var(--a3);color:var(--a3);background:rgba(0,206,201,.08)}
         .btn-copy.copied{border-color:var(--a3);color:var(--a3);background:rgba(0,206,201,.15)}
+        /* Planet styles */
+        .planet-row{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;justify-content:center}
+        .planet-row .input-field{flex:none;width:130px;font-size:.85rem;padding:10px 8px;letter-spacing:1px}
+        .btn-planet{padding:8px 14px;border-radius:8px;border:1px solid rgba(253,121,168,.3);background:rgba(253,121,168,.1);color:var(--a4);font-family:'Orbitron',sans-serif;font-size:.6rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:1px;white-space:nowrap}
+        .btn-planet:hover{background:rgba(253,121,168,.25)}
+        .btn-planet.active{background:linear-gradient(135deg,#e84393,#fd79a8);color:#fff;border-color:#e84393}
+        .planet-tag{font-family:'Orbitron',sans-serif;font-size:.6rem;font-weight:700;color:var(--a4);background:rgba(253,121,168,.12);border:1px solid rgba(253,121,168,.2);border-radius:5px;padding:2px 5px;margin-left:4px;flex-shrink:0;white-space:nowrap}
+        .planet-info{width:100%;text-align:center;padding:4px 0;font-size:.6rem;color:var(--txt2);font-family:'Inter',sans-serif;opacity:.7}
 
         /* Error */
         .error-msg{color:var(--a4);font-size:.8rem;text-align:center;margin-top:8px;display:none}
@@ -101,6 +110,10 @@
             <div class="toggle-row">
                 <button class="toggle-btn active" onclick="setHouses(6)">6 домов</button>
                 <button class="toggle-btn" onclick="setHouses(12)">12 домов</button>
+            </div>
+            <div class="planet-row">
+                <input type="text" id="planet-datetime" class="input-field" placeholder="сейчас" inputmode="text" autocomplete="off" title="ДД.ММ.ГГГГ ЧЧ:ММ или пусто=сейчас">
+                <button class="btn-planet" id="btn-planets" onclick="togglePlanets()">♃ Планеты</button>
             </div>
         </div>
 
@@ -171,42 +184,134 @@
 
     <script>
         "use strict";
+
+        // ═══ Планеты ═══
+        var PLANET_NAMES = {1:'☉',2:'☽',3:'♂',4:'☿',5:'♃',6:'♀',7:'♄',8:'♅',9:'♆',10:'♇'};
+        var PLANET_LABELS = {1:'Солнце',2:'Луна',3:'Марс',4:'Меркурий',5:'Юпитер',6:'Венера',7:'Сатурн',8:'Уран',9:'Нептун',10:'Плутон'};
+        var ZODIAC_NAMES = ['','Овен','Телец','Близнецы','Рак','Лев','Дева','Весы','Скорпион','Стрелец','Козерог','Водолей','Рыбы'];
+        // Mapping: astronomy-engine body names → our planet numbers
+        var ASTRO_BODIES = [
+            ['Sun',1],['Moon',2],['Mars',3],['Mercury',4],['Jupiter',5],
+            ['Venus',6],['Saturn',7],['Uranus',8],['Neptune',9],['Pluto',10]
+        ];
+        var planetData = null; // {1:[planets], 2:[planets], ...}
+        var planetsOn = false;
+
+        function calcPlanets(dateObj) {
+            if (typeof Astronomy === 'undefined') { alert('Библиотека астрономии не загружена. Нужен интернет.'); return null; }
+            var result = {};
+            for (var h = 1; h <= 12; h++) result[h] = [];
+            for (var i = 0; i < ASTRO_BODIES.length; i++) {
+                var bodyName = ASTRO_BODIES[i][0];
+                var pNum = ASTRO_BODIES[i][1];
+                try {
+                    var ecl = Astronomy.EclipticGeoMoon ? 
+                        (bodyName === 'Moon' ? Astronomy.EclipticGeoMoon(dateObj) : Astronomy.Ecliptic(Astronomy.GeoVector(bodyName, dateObj, true))) :
+                        Astronomy.Ecliptic(Astronomy.GeoVector(bodyName, dateObj, true));
+                    var lon = ecl.elon !== undefined ? ecl.elon : ecl.lon;
+                    var sign = Math.floor(lon / 30) + 1; // 1=Aries...12=Pisces
+                    if (sign > 12) sign = 12;
+                    if (sign < 1) sign = 1;
+                    result[sign].push(pNum);
+                } catch(e) { console.error('Planet calc error:', bodyName, e); }
+            }
+            return result;
+        }
+
+        function parsePlanetDate() {
+            var inp = document.getElementById('planet-datetime').value.trim();
+            if (!inp) return new Date();
+            // Format: DD.MM.YYYY HH:MM or DD.MM.YYYY
+            var m = inp.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
+            if (!m) return null;
+            var d = parseInt(m[1]), mo = parseInt(m[2]), y = parseInt(m[3]);
+            var h = m[4] ? parseInt(m[4]) : 12, mi = m[5] ? parseInt(m[5]) : 0;
+            return new Date(y, mo - 1, d, h, mi);
+        }
+
+        function togglePlanets() {
+            var btn = document.getElementById('btn-planets');
+            if (planetsOn) {
+                planetsOn = false; planetData = null;
+                btn.classList.remove('active');
+                document.querySelectorAll('.planet-tag').forEach(function(e){e.remove();});
+                document.querySelectorAll('.planet-info').forEach(function(e){e.remove();});
+                return;
+            }
+            var dt = parsePlanetDate();
+            if (!dt) { alert('Формат: ДД.ММ.ГГГГ ЧЧ:ММ или оставьте пустым'); return; }
+            planetData = calcPlanets(dt);
+            if (!planetData) return;
+            planetsOn = true;
+            btn.classList.add('active');
+            applyPlanetsToAll();
+        }
+
+        function applyPlanetsToAll() {
+            if (!planetData) return;
+            document.querySelectorAll('.planet-tag').forEach(function(e){e.remove();});
+            document.querySelectorAll('.planet-info').forEach(function(e){e.remove();});
+            document.querySelectorAll('.result-row').forEach(function(row) {
+                var idx = parseInt(row.dataset.idx);
+                var planets = planetData[idx];
+                if (planets && planets.length > 0) {
+                    var label = planets.map(function(p){return p;}).join(', ');
+                    var tag = document.createElement('span');
+                    tag.className = 'planet-tag';
+                    tag.textContent = label;
+                    tag.title = planets.map(function(p){return PLANET_LABELS[p]+' в '+ZODIAC_NAMES[idx];}).join('\n');
+                    row.querySelector('.result-value').insertAdjacentElement('afterend', tag);
+                }
+            });
+            // Add info line in each visible results card
+            var dt = parsePlanetDate();
+            var dtStr = dt ? dt.toLocaleString('ru-RU') : 'сейчас';
+            document.querySelectorAll('.results-card.visible').forEach(function(card) {
+                if (!card.querySelector('.planet-info')) {
+                    var info = document.createElement('div');
+                    info.className = 'planet-info';
+                    info.textContent = '♃ Планеты на: ' + dtStr;
+                    card.querySelector('.results-title').insertAdjacentElement('afterend', info);
+                }
+            });
+        }
+
         // ═══ Справочник созвездий ═══
         const CONSTELLATIONS = {
             1: ['Андромеда', 'Да. Управление, люди слушают, освобождение от старого. Коррекция: находиться среди людей.'],
             2: ['Антлия', 'Нет. Одиночество в отношениях, уход ненужного.'],
             3: ['Апус', 'Да. Красота и свобода, красивые люди, свободные отношения, развод (при вопросе о разводе).'],
-            4: ['Водолей', 'Да, но'],
-            5: ['Орёл', 'Да'],
-            6: ['Жертвенник', 'Нет. В 2 доме - кражи.'],
-            7: ['Овен', 'Да. Расточительность. В 2 доме - ограничение в деньгах.'],
-            8: ['Возничий', 'Нет'],
-            9: ['Волопас', 'Да, но нужен совет. Коррекция: находиться среди людей.'],
-            10: ['Резец', 'Да'],
-            11: ['Жираф', 'Да'],
-            12: ['Рак', 'И да, и нет. Выбор зависит от вас'],
-            13: ['Гончие псы', 'Нет'],
-            14: ['Большой пёс', 'Да. Динамичность, активность.'],
-            15: ['Малый пёс', 'Нет. Обездвиженность. Отверженность.'],
-            16: ['Козерог', 'Да, но нужны усилия'],
-            17: ['Киль', 'Да'],
-            18: ['Кассиопея', 'Да, но позже. Много мыслей о себе.'],
-            19: ['Кентавр', 'Да'],
-            20: ['Цефей', 'Да, но значительно позже.'],
-            21: ['Кит', 'Да.'],
-            22: ['Хамелеон', 'Событие непредсказуемо'],
-            23: ['Циркуль', 'Да. Ритуалы, духовность.'],
-            24: ['Голубь', 'Да. Спокойствие.'],
-            25: ['Волосы Вероники', 'Да, это предначертано'],
-            26: ['Южная Корона', 'Да'],
-            27: ['Северная Корона', 'Да'],
-            28: ['Ворон', 'Да'],
+            4: ['Водолей', 'Да, но. Обновление, очищение. Открытие дорог.'],
+            5: ['Орёл', 'Да. Стремление, развитие, движение вперед. Усиливает рядом стоящие созвездия.'],
+            6: ['Жертвенник', 'Нет в паре с 13, 8. Да, но придется чем-то пожертвовать. В 2 доме - кражи. Необходимость аскезы, направить энергию на другое. Бес по женской линии.'],
+            7: ['Овен', 'Да. Расточительность. В 2 доме - ограничение в деньгах. Новое дело принесет успех. Хочет получить желаемое сразу. Четкое намерение. Новые отношения, без старых привязок. Усиливает энергию следующего созвездия.'],
+            8: ['Возничий', 'Нет. Сплетни, невозможность сделать выбор. Искушение, сложно противостоять. Наличие любовницы, измена. Бес по отцовской линии.'],
+            9: ['Волопас', 'Да, но нужен совет. Нет, если решение на эмоциях. Гуру, учитель. Талант преподавателя. Коррекция: находиться среди людей. Кармический урок в отношениях (смотреть созвездия до и после).'],
+            10: ['Резец', 'Да. Творческие способности. Идеализация партнера. В работе нужен творческий подход. В 2 доме - финансовые иллюзии.'],
+            11: ['Жираф', 'Да. Дар предвидения. Обеспеченность на долгое время.'],
+            12: ['Рак', 'И да, и нет. Выбор зависит от вас (Да, если будешь следовать традиции). Традиция, память, род. Отношения надолго. Помощь близких в финансовых вопросах (смотреть созвездия рядом). Хронические и наследственные заболевания.'],
+            13: ['Гончие псы', 'Нет. Скандал, ссора, растерзанное сердце. Нежелание найти компромисс. Травма или внезапная болезнь. В финансах потери, непредвиденные расходы. На работе, конфликт, приводящий к увольнению.'],
+            14: ['Большой пёс', 'Да. Динамичность, активность. Кофе, цикорий.'],
+            15: ['Малый пёс', 'Нет. Обездвиженность. Отверженность. Перемен ожидать не стоит.'],
+            16: ['Козерог', 'Да, но нужны усилия. Повторяющийся цикл. Нужен выход за собственные рамки и ограничения. Человек-козерог. Человек, позволяющий в отношениях слишком много и переходящий границы.'],
+            17: ['Киль', 'Да. Преодоление застойной ситуации. В отношениях - человек хочет вами управлять, доминировать. В финансах требует взять штурвал в свои руки.'],
+            18: ['Кассиопея', 'Да, но позже. Подумай и выбери сам. Логика, мышление, обдумывание, высший интеллект. Много мыслей о себе. Накручивание себя в негативе (+23 зацикливание). Гордыня. В 1 доме - получение высшего образования.'],
+            19: ['Кентавр', 'Да. Целитель, врач, исцеляющая сила природы. Как выйти из проблем - смотреть созвездия рядом.'],
+            20: ['Цефей', 'Да, но значительно позже. Признание, отложенное на потом. Конфликт между личным и общественным. Природный авторитет. Забота о коллективе.'],
+            21: ['Кит', 'Да. Поглощение зла и очищение от лишнего.'],
+            22: ['Хамелеон', 'Событие непредсказуемо. Радость.'],
+            23: ['Циркуль', 'Да. Ритуалы, духовность. Математические способности. Нейросеть.'],
+            24: ['Голубь', 'Да. Спокойствие. Окончание бедствия и обретение покоя.'],
+            25: ['Волосы Вероники', 'Да, это предначертано. Сны.'],
+            26: ['Южная Корона', 'Да. Традиции, семейные ценности, реже наследственные заболевания.'],
+            27: ['Северная Корона', 'Да. Созвездие мага, способность к травничеству, целитель, врач.'],
+            28: ['Ворон', 'Да. Справедливость, правда. Связь между мирами. Правильное решение.'],
             29: ['Кратер', 'Да'],
-            30: ['Южный крест', 'Смотря какую дорогу выберете. Недопонимание.'],
+            30: ['Южный крест', 'Смотря какую дорогу выберете. Недопонимание (в 3 доме - с близкими).'],
             31: ['Лебедь', 'Да'],
             32: ['Дельфин', 'Да'],
             33: ['Золотая рыба', 'Да'],
-            34: ['Дракон', 'Да, но придется сильно изменится. Серьезные люди, травматичность.'],
+            34: ['Дракон', 'Да, но придется сильно изменится. Серьезные люди, травматичность. Тревога, недомогание.'],
             35: ['Малый конь', 'Да, но не сейчас'],
             36: ['Эридан', 'Нет'],
             37: ['Печь', 'Да и очень быстро.'],
@@ -224,13 +329,13 @@
             49: ['Южная клешня', 'Да'],
             50: ['Волк', 'Нет'],
             51: ['Рысь', 'Нет, это ваши иллюзии'],
-            52: ['Столовая гора', 'Да'],
+            52: ['Столовая гора', 'Да. Эффект плато.'],
             53: ['Микроскоп', 'Нет или шансы очень малы.'],
             54: ['Единорог', 'Да. Покой.'],
             55: ['Муха', 'Нет'],
-            56: ['Наугольник- Да, если оставишь эмоции', 'Наугольник- Да, если оставишь эмоции'],
-            57: ['Окстант', 'Нет'],
-            58: ['Змееносец -Да', 'Змееносец -Да'],
+            56: ['Наугольник', 'Да, если оставишь эмоции'],
+            57: ['Окстант', 'Нет. Аркан Колесница? «Жизнь не всегда укладывается в рамки». Потеря ориентиров. Проекции. Потребность в постоянном движении (страх тишины).'],
+            58: ['Змееносец', 'Да (нет для дороги). «Сожженый путь». Подавленный гнев, страх, неприемлемые желания. Лиминальность.'],
             59: ['Орион', 'Да, если'],
             60: ['Пожертвование, сам себе мешаешь.', 'Пожертвование, сам себе мешаешь.'],
             61: ['Пегас', 'Да'],
@@ -344,6 +449,7 @@
             }
             listEl.dataset.values = vals.join(' ');
             cardEl.classList.add('visible');
+            if (planetsOn) applyPlanetsToAll();
         }
 
         function copyResults(listId) {
