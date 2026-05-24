@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Октановый Калькулятор</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-input: #1a1a2e;
+            --border: #2a2a3e;
+            --border-focus: #6366f1;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --month-color: rgba(168, 85, 247, 0.45);
+            --day-color: rgba(249, 115, 22, 0.45);
+            --hour-color: rgba(34, 197, 94, 0.45);
+            --minute-color: rgba(59, 130, 246, 0.45);
+            --month-border: #a855f7;
+            --day-border: #f97316;
+            --hour-border: #22c55e;
+            --minute-border: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-top: 8px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Input Card */
+        .input-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .input-group {
+            flex: 1;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-group input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .input-group input::placeholder {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .btn-calc {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-calc:active {
+            transform: scale(0.97);
+        }
+
+        .btn-calc:hover {
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        /* Quick presets */
+        .presets {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:active,
+        .preset-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        /* Results */
+        .result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .result-card.visible {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 14px;
+        }
+
+        /* Octane Grid */
+        .octane-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
+        .octane-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 8px 6px;
+            border-radius: 8px;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
+            text-align: center;
+            min-width: 52px;
+            transition: all 0.2s;
+            line-height: 1.3;
+        }
+
+        .octane-num .original {
+            display: block;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .octane-num.match-month {
+            background: var(--month-color);
+            border-color: var(--month-border);
+        }
+
+        .octane-num.match-day {
+            background: var(--day-color);
+            border-color: var(--day-border);
+        }
+
+        .octane-num.match-hour {
+            background: var(--hour-color);
+            border-color: var(--hour-border);
+        }
+
+        .octane-num.match-minute {
+            background: var(--minute-color);
+            border-color: var(--minute-border);
+        }
+
+        .separator {
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            padding: 0 2px;
+            user-select: none;
+        }
+
+        .separator.bold {
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.4rem;
+        }
+
+        /* Row layout for 3 + sep + 3 */
+        .octane-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .octane-row + .octane-row {
+            margin-top: 10px;
+        }
+
+        .octane-row .octane-num {
+            flex: 1;
+            max-width: 80px;
+        }
+
+        /* Reduction info */
+        .reduction-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .reduction-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .reduction-chip .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .reduction-chip.month { background: var(--month-color); }
+        .reduction-chip.month .dot { background: var(--month-border); }
+        .reduction-chip.day { background: var(--day-color); }
+        .reduction-chip.day .dot { background: var(--day-border); }
+        .reduction-chip.hour { background: var(--hour-color); }
+        .reduction-chip.hour .dot { background: var(--hour-border); }
+        .reduction-chip.minute { background: var(--minute-color); }
+        .reduction-chip.minute .dot { background: var(--minute-border); }
+
+        /* N1-N4 detail */
+        .base-numbers {
+            background: var(--bg-input);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-top: 12px;
+        }
+
+        .base-numbers .title {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 8px;
+        }
+
+        .base-row {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            padding: 3px 0;
+        }
+
+        .base-row span:first-child {
+            color: var(--text-muted);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding: 12px;
+            background: var(--bg-input);
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+        }
+
+        .legend-dot.month { background: var(--month-color); border: 1px solid var(--month-border); }
+        .legend-dot.day { background: var(--day-color); border: 1px solid var(--day-border); }
+        .legend-dot.hour { background: var(--hour-color); border: 1px solid var(--hour-border); }
+        .legend-dot.minute { background: var(--minute-color); border: 1px solid var(--minute-border); }
+
+        /* History */
+        .history-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-item:active {
+            opacity: 0.7;
+        }
+
+        .history-item .date-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .history-item .octane-preview {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            max-width: 55%;
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⛽ Октановый Калькулятор</h1>
+            <p>Расчёт 12 домов по дате и времени</p>
+        </div>
+
+        <!-- Input -->
+        <div class="input-card">
+            <div class="presets">
+                <button class="preset-btn" onclick="setNow()">Сейчас</button>
+                <button class="preset-btn" onclick="setDate('01.01', '00:00')">01.01 00:00</button>
+                <button class="preset-btn" onclick="setDate('22.08', '12:34')">22.08 12:34</button>
+            </div>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>📅 Дата (ДД.ММ)</label>
+                    <input type="text" id="dateInput" placeholder="22.08" inputmode="numeric" maxlength="5" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label>🕐 Время (ЧЧ:ММ)</label>
+                    <input type="text" id="timeInput" placeholder="12:34" inputmode="numeric" maxlength="5" autocomplete="off">
+                </div>
+            </div>
+            <button class="btn-calc" id="calcBtn" onclick="calculate()">Рассчитать</button>
+        </div>
+
+        <!-- Results -->
+        <div class="result-card" id="resultCard">
+            <div class="result-title">Октановые числа</div>
+
+            <!-- Reduction chips -->
+            <div class="reduction-info" id="reductionInfo"></div>
+
+            <!-- Octane numbers -->
+            <div id="octaneDisplay"></div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot month"></div>Месяц</div>
+                <div class="legend-item"><div class="legend-dot day"></div>День</div>
+                <div class="legend-item"><div class="legend-dot hour"></div>Час</div>
+                <div class="legend-item"><div class="legend-dot minute"></div>Минуты</div>
+            </div>
+
+            <!-- Base numbers -->
+            <div class="base-numbers" id="baseNumbers"></div>
+        </div>
+
+        <!-- History -->
+        <div class="history-card" id="historyCard" style="display:none">
+            <div class="result-title">История</div>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <script>
+        // ── Core math ──────────────────────────────────────
+
+        function digitSum(n) {
+            return String(Math.abs(n)).split('').reduce((s, d) => s + parseInt(d), 0);
+        }
+
+        function reduce88(value) {
+            if (value <= 88) return { value, original: null };
+            const original = value;
+            while (value > 88) {
+                if (value >= 100) {
+                    const s = String(value);
+                    value = parseInt(s.slice(0, -1)) + parseInt(s.slice(-1));
+                } else {
+                    value = digitSum(value);
+                }
+            }
+            return { value, original };
+        }
+
+        function reduce22(value) {
+            while (value >= 22) value -= 22;
+            return value;
+        }
+
+        function formatOctane(val, original) {
+            if (original === null || original === undefined) return String(val);
+            if (original >= 100) {
+                const s = String(original);
+                const dotted = s.slice(0, -1) + '.' + s.slice(-1);
+                return `${val} <span class="original">(${dotted})</span>`;
+            }
+            return `${val} <span class="original">(${original})</span>`;
+        }
+
+        function calculateOctane(day, month, hours, minutes) {
+            const n1 = digitSum(day) + digitSum(month) + digitSum(hours) + digitSum(minutes);
+            const n2 = digitSum(n1);
+            const firstDigit = parseInt(String(day)[0]);
+            const n3 = Math.abs(n1 - firstDigit * 2);
+            const n4 = digitSum(n3);
+
+            const pos = new Array(12).fill(null);
+            pos[0] = { value: n1, original: null };
+            pos[1] = { value: n2, original: null };
+            pos[2] = { value: n3, original: null };
+            pos[3] = { value: n4, original: null };
+
+            for (let i = 4; i < 12; i++) {
+                const raw = pos[i - 2].value + pos[i - 4].value;
+                pos[i] = reduce88(raw);
+            }
+
+            return pos;
+        }
+
+        // ── UI ─────────────────────────────────────────────
+
+        const history = JSON.parse(localStorage.getItem('octane_history') || '[]');
+
+        function setNow() {
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2, '0');
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mi = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('dateInput').value = `${dd}.${mm}`;
+            document.getElementById('timeInput').value = `${hh}:${mi}`;
+            calculate();
+        }
+
+        function setDate(date, time) {
+            document.getElementById('dateInput').value = date;
+            document.getElementById('timeInput').value = time;
+            calculate();
+        }
+
+        function calculate() {
+            const dateStr = document.getElementById('dateInput').value.trim();
+            const timeStr = document.getElementById('timeInput').value.trim();
+
+            // Parse
+            const dateParts = dateStr.split('.');
+            const timeParts = timeStr.split(':');
+
+            if (dateParts.length < 2 || timeParts.length < 2) {
+                shakeBtn(); return;
+            }
+
+            const day = parseInt(dateParts[0]);
+            const month = parseInt(dateParts[1]);
+            const hour = parseInt(timeParts[0]);
+            const minute = parseInt(timeParts[1]);
+
+            if (isNaN(day) || isNaN(month) || isNaN(hour) || isNaN(minute)) {
+                shakeBtn(); return;
+            }
+
+            if (day < 1 || day > 31 || month < 1 || month > 12 || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+                shakeBtn(); return;
+            }
+
+            // Calculate octane
+            const octane = calculateOctane(day, month, hour, minute);
+
+            // Reduce date/time components by -22
+            const dtReduced = [
+                { name: 'month', label: `М${month}`, value: reduce22(month), original: month, priority: 0, css: 'match-month' },
+                { name: 'day', label: `Д${day}`, value: reduce22(day), original: day, priority: 1, css: 'match-day' },
+                { name: 'hour', label: `Ч${hour}`, value: reduce22(hour), original: hour, priority: 2, css: 'match-hour' },
+                { name: 'minute', label: `М${minute}`, value: reduce22(minute), original: minute, priority: 3, css: 'match-minute' },
+            ];
+            dtReduced.sort((a, b) => a.priority - b.priority);
+
+            // Render reduction chips
+            const chipHtml = dtReduced.map(dt => {
+                const arrow = dt.original >= 22 ? ` → ${dt.value}` : '';
+                return `<div class="reduction-chip ${dt.name}">
+                    <span class="dot"></span>${dt.label}${arrow} = ${dt.value}
+                </div>`;
+            }).join('');
+            document.getElementById('reductionInfo').innerHTML = chipHtml;
+
+            // Render octane numbers in 2 rows of (3 | 3) with bold separator between rows
+            let html = '';
+
+            // Row 1: houses 1-3 | 4-6
+            html += '<div class="octane-row">';
+            for (let i = 0; i < 6; i++) {
+                if (i === 3) html += '<div class="separator">|</div>';
+                const o = octane[i];
+                const reduced = reduce22(o.value);
+                let matchClass = '';
+                for (const dt of dtReduced) {
+                    if (reduced === dt.value) { matchClass = dt.css; break; }
+                }
+                html += `<div class="octane-num ${matchClass}">${formatOctane(o.value, o.original)}</div>`;
+            }
+            html += '</div>';
+
+            // Bold separator between row 1 and row 2
+            html += '<div style="text-align:center;margin:4px 0"><span class="separator bold" style="display:inline-flex;justify-content:center">━━━━━━━━━━━━━━━━━━━━</span></div>';
+
+            // Row 2: houses 7-9 | 10-12
+            html += '<div class="octane-row">';
+            for (let i = 6; i < 12; i++) {
+                if (i === 9) html += '<div class="separator">|</div>';
+                const o = octane[i];
+                const reduced = reduce22(o.value);
+                let matchClass = '';
+                for (const dt of dtReduced) {
+                    if (reduced === dt.value) { matchClass = dt.css; break; }
+                }
+                html += `<div class="octane-num ${matchClass}">${formatOctane(o.value, o.original)}</div>`;
+            }
+            html += '</div>';
+
+            document.getElementById('octaneDisplay').innerHTML = html;
+
+            // Base numbers detail
+            const n1 = octane[0].value, n2 = octane[1].value, n3 = octane[2].value, n4 = octane[3].value;
+            const firstDigit = parseInt(String(day)[0]);
+            document.getElementById('baseNumbers').innerHTML = `
+                <div class="title">Базовые числа</div>
+                <div class="base-row"><span>N1 = Σ(${day},${month},${hour},${minute})</span><span>${n1}</span></div>
+                <div class="base-row"><span>N2 = Σ цифр(${n1})</span><span>${n2}</span></div>
+                <div class="base-row"><span>N3 = |${n1} − ${firstDigit}×2|</span><span>${n3}</span></div>
+                <div class="base-row"><span>N4 = Σ цифр(${n3})</span><span>${n4}</span></div>
+            `;
+
+            // Show result
+            document.getElementById('resultCard').classList.add('visible');
+
+            // Save to history
+            const entry = {
+                date: dateStr,
+                time: timeStr,
+                values: octane.map(o => o.value).join(' ')
+            };
+            // Avoid duplicates
+            const key = `${dateStr} ${timeStr}`;
+            const idx = history.findIndex(h => `${h.date} ${h.time}` === key);
+            if (idx >= 0) history.splice(idx, 1);
+            history.unshift(entry);
+            if (history.length > 10) history.pop();
+            localStorage.setItem('octane_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (history.length === 0) {
+                document.getElementById('historyCard').style.display = 'none';
+                return;
+            }
+            document.getElementById('historyCard').style.display = 'block';
+            const html = history.map(h => `
+                <div class="history-item" onclick="setDate('${h.date}','${h.time}')">
+                    <span class="date-time">${h.date} ${h.time}</span>
+                    <span class="octane-preview">${h.values}</span>
+                </div>
+            `).join('');
+            document.getElementById('historyList').innerHTML = html;
+        }
+
+        function shakeBtn() {
+            const btn = document.getElementById('calcBtn');
+            btn.style.animation = 'shake 0.4s';
+            setTimeout(() => btn.style.animation = '', 400);
+        }
+
+        // Auto-format inputs
+        document.getElementById('dateInput').addEventListener('input', function(e) {
+            let v = this.value.replace(/[^\d.]/g, '');
+            if (v.length === 2 && !v.includes('.') && e.inputType !== 'deleteContentBackward') v += '.';
+            this.value = v;
+        });
+
+        document.getElementById('timeInput').addEventListener('input', function(e) {
+            let v = this.value.replace(/[^\d:]/g, '');
+            if (v.length === 2 && !v.includes(':') && e.inputType !== 'deleteContentBackward') v += ':';
+            this.value = v;
+        });
+
+        // Enter key
+        document.querySelectorAll('input').forEach(inp => {
+            inp.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+        });
+
+        // Init history
+        renderHistory();
+    </script>
+
+    <style>
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+    </style>
+</body>
+</html>
