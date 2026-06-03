@@ -6,6 +6,7 @@
     <title>Октановый Калькулятор</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -28,6 +29,8 @@
             --day-border: #f97316;
             --hour-border: #22c55e;
             --minute-border: #3b82f6;
+            --success: #22c55e;
+            --danger: #ef4444;
         }
 
         body {
@@ -43,36 +46,20 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        .container {
-            width: 100%;
-            max-width: 420px;
-        }
+        .container { width: 100%; max-width: 420px; }
 
         /* Header */
-        .header {
-            text-align: center;
-            margin-bottom: 24px;
-            padding-top: 8px;
-        }
-
+        .header { text-align: center; margin-bottom: 20px; padding-top: 8px; }
         .header h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.4rem; font-weight: 700;
             background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.02em;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; letter-spacing: -0.02em;
         }
+        .header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
 
-        .header p {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        /* Input Card */
-        .input-card {
+        /* Cards */
+        .card {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
@@ -80,239 +67,119 @@
             margin-bottom: 16px;
         }
 
-        .input-row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .input-group {
-            flex: 1;
-        }
-
+        /* Input */
+        .input-row { display: flex; gap: 12px; margin-bottom: 16px; }
+        .input-group { flex: 1; }
         .input-group label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            display: block; font-size: 0.7rem; font-weight: 500;
+            color: var(--text-secondary); margin-bottom: 6px;
+            text-transform: uppercase; letter-spacing: 0.05em;
         }
-
-        .input-group input {
-            width: 100%;
-            background: var(--bg-input);
-            border: 1.5px solid var(--border);
-            border-radius: 10px;
-            padding: 12px 14px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: var(--text-primary);
-            text-align: center;
-            outline: none;
+        .input-group input, .input-group textarea {
+            width: 100%; background: var(--bg-input);
+            border: 1.5px solid var(--border); border-radius: 10px;
+            padding: 12px 14px; font-family: 'JetBrains Mono', monospace;
+            font-size: 1.05rem; font-weight: 500; color: var(--text-primary);
+            text-align: center; outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
-
-        .input-group input:focus {
+        .input-group input:focus, .input-group textarea:focus {
             border-color: var(--border-focus);
             box-shadow: 0 0 0 3px var(--accent-glow);
         }
-
-        .input-group input::placeholder {
-            color: var(--text-muted);
-            font-size: 0.95rem;
+        .input-group input::placeholder, .input-group textarea::placeholder {
+            color: var(--text-muted); font-size: 0.9rem;
         }
 
-        .btn-calc {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: #fff;
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
+        /* Buttons */
+        .btn {
+            width: 100%; padding: 13px; border: none; border-radius: 12px;
+            font-family: 'Inter', sans-serif; font-size: 0.95rem;
+            font-weight: 600; cursor: pointer;
             transition: transform 0.15s, box-shadow 0.2s;
             letter-spacing: 0.02em;
         }
+        .btn:active { transform: scale(0.97); }
 
-        .btn-calc:active {
-            transform: scale(0.97);
+        .btn-calc {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
         }
+        .btn-calc:hover { box-shadow: 0 4px 20px var(--accent-glow); }
 
-        .btn-calc:hover {
-            box-shadow: 0 4px 20px var(--accent-glow);
+        .btn-row { display: flex; gap: 10px; margin-top: 14px; }
+        .btn-row .btn { flex: 1; padding: 11px 8px; font-size: 0.8rem; }
+
+        .btn-save {
+            background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff;
         }
-
-        /* Quick presets */
-        .presets {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
+        .btn-copy {
+            background: var(--bg-input); color: var(--text-secondary);
+            border: 1.5px solid var(--border);
         }
+        .btn-copy:hover { border-color: var(--accent); color: var(--text-primary); }
 
+        .btn-icon { font-size: 1rem; margin-right: 4px; }
+
+        /* Presets */
+        .presets { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
         .preset-btn {
-            padding: 6px 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: transparent;
-            color: var(--text-secondary);
-            font-family: 'Inter', sans-serif;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
+            padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px;
+            background: transparent; color: var(--text-secondary);
+            font-family: 'Inter', sans-serif; font-size: 0.75rem;
+            cursor: pointer; transition: all 0.2s;
         }
-
-        .preset-btn:active,
-        .preset-btn:hover {
-            border-color: var(--accent);
-            color: var(--text-primary);
+        .preset-btn:active, .preset-btn:hover {
+            border-color: var(--accent); color: var(--text-primary);
             background: rgba(99, 102, 241, 0.1);
         }
 
         /* Results */
-        .result-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .result-card.visible {
-            display: block;
-        }
+        .result-card { display: none; animation: fadeIn 0.3s ease; }
+        .result-card.visible { display: block; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .result-title {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 14px;
+        .section-title {
+            font-size: 0.72rem; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;
         }
 
-        /* Octane Grid */
-        .octane-grid {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 6px;
-            margin-bottom: 20px;
+        /* Octane */
+        .octane-row {
+            display: flex; align-items: center; justify-content: center;
+            gap: 5px; width: 100%;
         }
-
+        .octane-row + .octane-row { margin-top: 10px; }
         .octane-num {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.95rem;
-            font-weight: 500;
-            padding: 8px 6px;
-            border-radius: 8px;
-            background: var(--bg-input);
-            border: 1.5px solid var(--border);
-            text-align: center;
-            min-width: 52px;
-            transition: all 0.2s;
-            line-height: 1.3;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;
+            font-weight: 500; padding: 8px 6px; border-radius: 8px;
+            background: var(--bg-input); border: 1.5px solid var(--border);
+            text-align: center; min-width: 52px; flex: 1; max-width: 80px;
+            transition: all 0.2s; line-height: 1.3;
         }
-
-        .octane-num .original {
-            display: block;
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        .octane-num.match-month {
-            background: var(--month-color);
-            border-color: var(--month-border);
-        }
-
-        .octane-num.match-day {
-            background: var(--day-color);
-            border-color: var(--day-border);
-        }
-
-        .octane-num.match-hour {
-            background: var(--hour-color);
-            border-color: var(--hour-border);
-        }
-
-        .octane-num.match-minute {
-            background: var(--minute-color);
-            border-color: var(--minute-border);
-        }
+        .octane-num .original { display: block; font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+        .octane-num.match-month { background: var(--month-color); border-color: var(--month-border); }
+        .octane-num.match-day { background: var(--day-color); border-color: var(--day-border); }
+        .octane-num.match-hour { background: var(--hour-color); border-color: var(--hour-border); }
+        .octane-num.match-minute { background: var(--minute-color); border-color: var(--minute-border); }
 
         .separator {
-            display: flex;
-            align-items: center;
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            padding: 0 2px;
-            user-select: none;
+            display: flex; align-items: center; font-size: 1.1rem;
+            color: var(--text-muted); padding: 0 2px; user-select: none;
         }
+        .separator.bold { color: #fff; font-weight: 700; font-size: 1.4rem; }
 
-        .separator.bold {
-            color: #fff;
-            font-weight: 700;
-            font-size: 1.4rem;
-        }
-
-        /* Row layout for 3 + sep + 3 */
-        .octane-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            width: 100%;
-        }
-
-        .octane-row + .octane-row {
-            margin-top: 10px;
-        }
-
-        .octane-row .octane-num {
-            flex: 1;
-            max-width: 80px;
-        }
-
-        /* Reduction info */
-        .reduction-info {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
+        /* Reduction chips */
+        .reduction-info { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
         .reduction-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            font-weight: 500;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 10px; border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 500;
         }
-
-        .reduction-chip .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
+        .reduction-chip .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
         .reduction-chip.month { background: var(--month-color); }
         .reduction-chip.month .dot { background: var(--month-border); }
         .reduction-chip.day { background: var(--day-color); }
@@ -322,124 +189,212 @@
         .reduction-chip.minute { background: var(--minute-color); }
         .reduction-chip.minute .dot { background: var(--minute-border); }
 
-        /* N1-N4 detail */
-        .base-numbers {
-            background: var(--bg-input);
-            border-radius: 10px;
-            padding: 12px 14px;
-            margin-top: 12px;
-        }
-
-        .base-numbers .title {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 8px;
-        }
-
-        .base-row {
-            display: flex;
-            justify-content: space-between;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            padding: 3px 0;
-        }
-
-        .base-row span:first-child {
-            color: var(--text-muted);
-        }
-
         /* Legend */
         .legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            padding: 12px;
-            background: var(--bg-input);
-            border-radius: 10px;
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+            padding: 10px; background: var(--bg-input); border-radius: 10px; margin-top: 14px;
         }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-        }
-
-        .legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 4px;
-        }
-
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: var(--text-secondary); }
+        .legend-dot { width: 12px; height: 12px; border-radius: 4px; }
         .legend-dot.month { background: var(--month-color); border: 1px solid var(--month-border); }
         .legend-dot.day { background: var(--day-color); border: 1px solid var(--day-border); }
         .legend-dot.hour { background: var(--hour-color); border: 1px solid var(--hour-border); }
         .legend-dot.minute { background: var(--minute-color); border: 1px solid var(--minute-border); }
 
-        /* History */
-        .history-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 16px 20px;
-            margin-bottom: 16px;
+        /* Base numbers */
+        .base-numbers {
+            background: var(--bg-input); border-radius: 10px;
+            padding: 12px 14px; margin-top: 12px;
+        }
+        .base-numbers .title {
+            font-size: 0.7rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+        }
+        .base-row {
+            display: flex; justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+            color: var(--text-secondary); padding: 3px 0;
+        }
+        .base-row span:first-child { color: var(--text-muted); }
+
+        /* Save area */
+        .save-area { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .save-input {
+            width: 100%; background: var(--bg-input);
+            border: 1.5px solid var(--border); border-radius: 10px;
+            padding: 11px 14px; font-family: 'Inter', sans-serif;
+            font-size: 0.9rem; color: var(--text-primary);
+            text-align: left; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            margin-bottom: 10px;
+        }
+        .save-input:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .save-input::placeholder { color: var(--text-muted); }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: #fff; padding: 12px 24px;
+            border-radius: 12px; font-size: 0.85rem; font-weight: 500;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            opacity: 0; transition: opacity 0.3s;
+            pointer-events: none; z-index: 100;
+        }
+        .toast.show { opacity: 1; }
+
+        /* Notes section */
+        .notes-section { margin-top: 8px; }
+
+        .search-input {
+            width: 100%; background: var(--bg-input);
+            border: 1.5px solid var(--border); border-radius: 10px;
+            padding: 10px 14px 10px 36px; font-family: 'Inter', sans-serif;
+            font-size: 0.85rem; color: var(--text-primary);
+            outline: none; transition: border-color 0.2s;
+            margin-bottom: 12px;
+        }
+        .search-input:focus { border-color: var(--border-focus); }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-wrap {
+            position: relative;
+        }
+        .search-icon {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            font-size: 0.9rem; color: var(--text-muted); pointer-events: none;
         }
 
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            transition: opacity 0.2s;
+        .note-item {
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px; margin-bottom: 10px;
+            transition: all 0.2s; position: relative;
         }
+        .note-item:active { transform: scale(0.99); }
 
-        .history-item:last-child {
-            border-bottom: none;
+        .note-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 8px;
         }
-
-        .history-item:active {
-            opacity: 0.7;
+        .note-label {
+            font-size: 0.9rem; font-weight: 600; color: var(--text-primary);
+            flex: 1; line-height: 1.3;
         }
-
-        .history-item .date-time {
+        .note-datetime {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-            font-weight: 500;
+            font-size: 0.75rem; color: var(--accent);
+            background: rgba(99,102,241,0.15); padding: 3px 8px;
+            border-radius: 6px; white-space: nowrap; margin-left: 8px;
         }
 
-        .history-item .octane-preview {
+        .note-octane {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            max-width: 55%;
-            text-align: right;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 0.78rem; color: var(--text-secondary);
+            line-height: 1.6; word-spacing: 2px;
+        }
+        .note-octane .hl-m { color: var(--month-border); font-weight: 600; }
+        .note-octane .hl-d { color: var(--day-border); font-weight: 600; }
+        .note-octane .hl-h { color: var(--hour-border); font-weight: 600; }
+        .note-octane .hl-i { color: var(--minute-border); font-weight: 600; }
+
+        .note-actions {
+            display: flex; gap: 8px; margin-top: 10px;
+        }
+        .note-btn {
+            padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px;
+            background: transparent; color: var(--text-muted);
+            font-family: 'Inter', sans-serif; font-size: 0.7rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .note-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+        .note-btn.delete:hover { border-color: var(--danger); color: var(--danger); }
+
+        /* Planet section */
+        .planet-card { display: none; animation: fadeIn 0.3s ease; }
+        .planet-card.visible { display: block; }
+
+        .planet-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; justify-content: center; }
+        .planet-btn {
+            padding: 7px 10px; border-radius: 8px; border: 1.5px solid var(--border);
+            background: var(--bg-input); color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .planet-btn:active { transform: scale(0.95); }
+        .planet-btn.active { background: rgba(236, 72, 153, 0.2); border-color: #ec4899; color: #f9a8d4; }
+        .planet-btn.all-btn { border-color: rgba(236, 72, 153, 0.4); color: #ec4899; font-weight: 600; width: 100%; justify-content: center; padding: 10px; }
+        .planet-btn.all-btn.active { background: linear-gradient(135deg, #be185d, #ec4899); color: #fff; border-color: #ec4899; }
+
+        .planet-val { font-size: 0.6rem; opacity: 0.6; }
+
+        .planet-result-row {
+            display: flex; align-items: center; justify-content: center;
+            gap: 5px; width: 100%;
+        }
+        .planet-result-row + .planet-result-row { margin-top: 10px; }
+
+        .planet-num {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;
+            font-weight: 500; padding: 8px 6px; border-radius: 8px;
+            background: var(--bg-input); border: 1.5px solid var(--border);
+            text-align: center; min-width: 52px; flex: 1; max-width: 80px;
+            line-height: 1.3; transition: all 0.3s;
+        }
+        .planet-num .p-base { font-size: 0.6rem; color: var(--text-muted); display: block; }
+        .planet-num .p-add { font-size: 0.55rem; color: #f472b6; display: block; margin-top: 1px; }
+        .planet-num.has-planet { border-color: rgba(236, 72, 153, 0.5); background: rgba(236, 72, 153, 0.1); }
+
+        .moon-range {
+            background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 10px; padding: 10px 14px; margin-top: 12px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+            color: var(--text-secondary); text-align: center; display: none;
+        }
+        .moon-range.visible { display: block; animation: fadeIn 0.3s; }
+        .moon-range .moon-icon { font-size: 1.1rem; }
+        .moon-range .moon-dates { color: var(--text-primary); font-weight: 500; }
+
+        .planet-house-info {
+            display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;
+            justify-content: center;
+        }
+        .phi { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px;
+               background: rgba(236, 72, 153, 0.08); border: 1px solid rgba(236, 72, 153, 0.2);
+               color: #f9a8d4; font-family: 'JetBrains Mono', monospace; }
+
+        .notes-empty {
+            text-align: center; color: var(--text-muted);
+            font-size: 0.85rem; padding: 24px 0;
+        }
+        .notes-count {
+            font-size: 0.7rem; color: var(--text-muted);
+            text-align: right; margin-bottom: 8px;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <h1>⛽ Октановый Калькулятор</h1>
             <p>Расчёт 12 домов по дате и времени</p>
         </div>
 
         <!-- Input -->
-        <div class="input-card">
+        <div class="card">
             <div class="presets">
                 <button class="preset-btn" onclick="setNow()">Сейчас</button>
-                <button class="preset-btn" onclick="setDate('01.01', '00:00')">01.01 00:00</button>
-                <button class="preset-btn" onclick="setDate('22.08', '12:34')">22.08 12:34</button>
+                <button class="preset-btn" onclick="setDate('01.01','00:00')">01.01 00:00</button>
+                <button class="preset-btn" onclick="setDate('22.08','12:34')">22.08 12:34</button>
             </div>
             <div class="input-row">
                 <div class="input-group">
@@ -451,40 +406,69 @@
                     <input type="text" id="timeInput" placeholder="12:34" inputmode="numeric" maxlength="5" autocomplete="off">
                 </div>
             </div>
-            <button class="btn-calc" id="calcBtn" onclick="calculate()">Рассчитать</button>
+            <button class="btn btn-calc" id="calcBtn" onclick="calculate()">Рассчитать</button>
         </div>
 
         <!-- Results -->
-        <div class="result-card" id="resultCard">
-            <div class="result-title">Октановые числа</div>
-
-            <!-- Reduction chips -->
+        <div class="card result-card" id="resultCard">
+            <div class="section-title">Октановые числа</div>
             <div class="reduction-info" id="reductionInfo"></div>
-
-            <!-- Octane numbers -->
             <div id="octaneDisplay"></div>
-
-            <!-- Legend -->
             <div class="legend">
                 <div class="legend-item"><div class="legend-dot month"></div>Месяц</div>
                 <div class="legend-item"><div class="legend-dot day"></div>День</div>
                 <div class="legend-item"><div class="legend-dot hour"></div>Час</div>
                 <div class="legend-item"><div class="legend-dot minute"></div>Минуты</div>
             </div>
-
-            <!-- Base numbers -->
             <div class="base-numbers" id="baseNumbers"></div>
+
+            <!-- Save & Copy -->
+            <div class="save-area">
+                <input type="text" class="save-input" id="noteLabel" placeholder="Aster шорт, BTC лонг сиг...">
+                <div class="btn-row">
+                    <button class="btn btn-save" onclick="saveNote()"><span class="btn-icon">📌</span> В заметки</button>
+                    <button class="btn btn-copy" onclick="copyForTg()"><span class="btn-icon">📋</span> Для ТГ</button>
+                </div>
+            </div>
         </div>
 
-        <!-- History -->
-        <div class="history-card" id="historyCard" style="display:none">
-            <div class="result-title">История</div>
-            <div id="historyList"></div>
+        <!-- Planets -->
+        <div class="card planet-card" id="planetCard">
+            <div class="section-title">♃ Планеты + Октан</div>
+            <div class="planet-house-info" id="planetHouseInfo"></div>
+            <div class="planet-btns">
+                <button class="planet-btn" data-p="1" onclick="togglePlanet(1)">☉<span class="planet-val">8</span></button>
+                <button class="planet-btn" data-p="2" onclick="togglePlanet(2)">☽<span class="planet-val">7</span></button>
+                <button class="planet-btn" data-p="3" onclick="togglePlanet(3)">♂<span class="planet-val">1</span></button>
+                <button class="planet-btn" data-p="4" onclick="togglePlanet(4)">☿<span class="planet-val">5</span></button>
+                <button class="planet-btn" data-p="5" onclick="togglePlanet(5)">♃<span class="planet-val">15</span></button>
+                <button class="planet-btn" data-p="6" onclick="togglePlanet(6)">♀<span class="planet-val">3</span></button>
+                <button class="planet-btn" data-p="7" onclick="togglePlanet(7)">♄<span class="planet-val">16</span></button>
+                <button class="planet-btn" data-p="8" onclick="togglePlanet(8)">♅<span class="planet-val">17</span></button>
+                <button class="planet-btn" data-p="9" onclick="togglePlanet(9)">♆<span class="planet-val">20</span></button>
+                <button class="planet-btn" data-p="10" onclick="togglePlanet(10)">♇<span class="planet-val">13</span></button>
+                <button class="planet-btn all-btn" id="allPlanetsBtn" onclick="toggleAllPlanets()">♃ Все планеты</button>
+            </div>
+            <div id="planetOctaneDisplay"></div>
+            <div class="moon-range" id="moonRange"></div>
+        </div>
+
+        <!-- Notes -->
+        <div class="card notes-section" id="notesSection">
+            <div class="section-title">📒 Заметки</div>
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Поиск по монете, дате..." oninput="renderNotes()">
+            </div>
+            <div class="notes-count" id="notesCount"></div>
+            <div id="notesList"></div>
         </div>
     </div>
 
+    <div class="toast" id="toast"></div>
+
     <script>
-        // ── Core math ──────────────────────────────────────
+        // ── Math ──────────────────────────────────────────
 
         function digitSum(n) {
             return String(Math.abs(n)).split('').reduce((s, d) => s + parseInt(d), 0);
@@ -513,10 +497,18 @@
             if (original === null || original === undefined) return String(val);
             if (original >= 100) {
                 const s = String(original);
-                const dotted = s.slice(0, -1) + '.' + s.slice(-1);
-                return `${val} <span class="original">(${dotted})</span>`;
+                return `${val} <span class="original">(${s.slice(0,-1)}.${s.slice(-1)})</span>`;
             }
             return `${val} <span class="original">(${original})</span>`;
+        }
+
+        function formatOctanePlain(val, original) {
+            if (original === null || original === undefined) return String(val);
+            if (original >= 100) {
+                const s = String(original);
+                return `${val}(${s.slice(0,-1)}.${s.slice(-1)})`;
+            }
+            return `${val}(${original})`;
         }
 
         function calculateOctane(day, month, hours, minutes) {
@@ -536,156 +528,284 @@
                 const raw = pos[i - 2].value + pos[i - 4].value;
                 pos[i] = reduce88(raw);
             }
-
             return pos;
         }
 
-        // ── UI ─────────────────────────────────────────────
+        function getDtReduced(day, month, hour, minute) {
+            return [
+                { name: 'month', label: `М${month}`, value: reduce22(month), original: month, priority: 0, css: 'match-month', emoji: '🟣' },
+                { name: 'day', label: `Д${day}`, value: reduce22(day), original: day, priority: 1, css: 'match-day', emoji: '🟠' },
+                { name: 'hour', label: `Ч${hour}`, value: reduce22(hour), original: hour, priority: 2, css: 'match-hour', emoji: '🟢' },
+                { name: 'minute', label: `М${minute}`, value: reduce22(minute), original: minute, priority: 3, css: 'match-minute', emoji: '🔵' },
+            ];
+        }
 
-        const history = JSON.parse(localStorage.getItem('octane_history') || '[]');
+        function getMatchType(octaneValue, dtReduced) {
+            const r = reduce22(octaneValue);
+            for (const dt of dtReduced) {
+                if (r === dt.value) return dt;
+            }
+            return null;
+        }
+
+        // ── State ─────────────────────────────────────────
+
+        let lastCalc = null; // { day, month, hour, minute, octane, dtReduced }
+        let notes = JSON.parse(localStorage.getItem('octane_notes') || '[]');
+
+        // ── UI ─────────────────────────────────────────────
 
         function setNow() {
             const now = new Date();
-            const dd = String(now.getDate()).padStart(2, '0');
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mi = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('dateInput').value = `${dd}.${mm}`;
-            document.getElementById('timeInput').value = `${hh}:${mi}`;
+            document.getElementById('dateInput').value = pad(now.getDate()) + '.' + pad(now.getMonth() + 1);
+            document.getElementById('timeInput').value = pad(now.getHours()) + ':' + pad(now.getMinutes());
             calculate();
         }
-
-        function setDate(date, time) {
-            document.getElementById('dateInput').value = date;
-            document.getElementById('timeInput').value = time;
+        function setDate(d, t) {
+            document.getElementById('dateInput').value = d;
+            document.getElementById('timeInput').value = t;
             calculate();
         }
+        function pad(n) { return String(n).padStart(2, '0'); }
 
         function calculate() {
             const dateStr = document.getElementById('dateInput').value.trim();
             const timeStr = document.getElementById('timeInput').value.trim();
+            const dp = dateStr.split('.'), tp = timeStr.split(':');
 
-            // Parse
-            const dateParts = dateStr.split('.');
-            const timeParts = timeStr.split(':');
+            if (dp.length < 2 || tp.length < 2) { shakeBtn(); return; }
 
-            if (dateParts.length < 2 || timeParts.length < 2) {
-                shakeBtn(); return;
-            }
+            const day = parseInt(dp[0]), month = parseInt(dp[1]);
+            const hour = parseInt(tp[0]), minute = parseInt(tp[1]);
 
-            const day = parseInt(dateParts[0]);
-            const month = parseInt(dateParts[1]);
-            const hour = parseInt(timeParts[0]);
-            const minute = parseInt(timeParts[1]);
+            if ([day,month,hour,minute].some(isNaN)) { shakeBtn(); return; }
+            if (day<1||day>31||month<1||month>12||hour<0||hour>23||minute<0||minute>59) { shakeBtn(); return; }
 
-            if (isNaN(day) || isNaN(month) || isNaN(hour) || isNaN(minute)) {
-                shakeBtn(); return;
-            }
-
-            if (day < 1 || day > 31 || month < 1 || month > 12 || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-                shakeBtn(); return;
-            }
-
-            // Calculate octane
             const octane = calculateOctane(day, month, hour, minute);
+            const dtReduced = getDtReduced(day, month, hour, minute);
 
-            // Reduce date/time components by -22
-            const dtReduced = [
-                { name: 'month', label: `М${month}`, value: reduce22(month), original: month, priority: 0, css: 'match-month' },
-                { name: 'day', label: `Д${day}`, value: reduce22(day), original: day, priority: 1, css: 'match-day' },
-                { name: 'hour', label: `Ч${hour}`, value: reduce22(hour), original: hour, priority: 2, css: 'match-hour' },
-                { name: 'minute', label: `М${minute}`, value: reduce22(minute), original: minute, priority: 3, css: 'match-minute' },
-            ];
-            dtReduced.sort((a, b) => a.priority - b.priority);
+            lastCalc = { day, month, hour, minute, octane, dtReduced, dateStr, timeStr };
 
-            // Render reduction chips
-            const chipHtml = dtReduced.map(dt => {
+            // Reduction chips
+            document.getElementById('reductionInfo').innerHTML = dtReduced.map(dt => {
                 const arrow = dt.original >= 22 ? ` → ${dt.value}` : '';
-                return `<div class="reduction-chip ${dt.name}">
-                    <span class="dot"></span>${dt.label}${arrow} = ${dt.value}
-                </div>`;
+                return `<div class="reduction-chip ${dt.name}"><span class="dot"></span>${dt.label}${arrow} = ${dt.value}</div>`;
             }).join('');
-            document.getElementById('reductionInfo').innerHTML = chipHtml;
 
-            // Render octane numbers in 2 rows of (3 | 3) with bold separator between rows
+            // Octane display
             let html = '';
-
-            // Row 1: houses 1-3 | 4-6
+            // Row 1: 1-3 | 4-6
             html += '<div class="octane-row">';
             for (let i = 0; i < 6; i++) {
                 if (i === 3) html += '<div class="separator">|</div>';
                 const o = octane[i];
-                const reduced = reduce22(o.value);
-                let matchClass = '';
-                for (const dt of dtReduced) {
-                    if (reduced === dt.value) { matchClass = dt.css; break; }
-                }
-                html += `<div class="octane-num ${matchClass}">${formatOctane(o.value, o.original)}</div>`;
+                const match = getMatchType(o.value, dtReduced);
+                html += `<div class="octane-num ${match ? match.css : ''}">${formatOctane(o.value, o.original)}</div>`;
             }
             html += '</div>';
-
-            // Bold separator between row 1 and row 2
             html += '<div style="text-align:center;margin:4px 0"><span class="separator bold" style="display:inline-flex;justify-content:center">━━━━━━━━━━━━━━━━━━━━</span></div>';
-
-            // Row 2: houses 7-9 | 10-12
+            // Row 2: 7-9 | 10-12
             html += '<div class="octane-row">';
             for (let i = 6; i < 12; i++) {
                 if (i === 9) html += '<div class="separator">|</div>';
                 const o = octane[i];
-                const reduced = reduce22(o.value);
-                let matchClass = '';
-                for (const dt of dtReduced) {
-                    if (reduced === dt.value) { matchClass = dt.css; break; }
-                }
-                html += `<div class="octane-num ${matchClass}">${formatOctane(o.value, o.original)}</div>`;
+                const match = getMatchType(o.value, dtReduced);
+                html += `<div class="octane-num ${match ? match.css : ''}">${formatOctane(o.value, o.original)}</div>`;
             }
             html += '</div>';
-
             document.getElementById('octaneDisplay').innerHTML = html;
 
-            // Base numbers detail
+            // Base numbers
             const n1 = octane[0].value, n2 = octane[1].value, n3 = octane[2].value, n4 = octane[3].value;
-            const firstDigit = parseInt(String(day)[0]);
+            const fd = parseInt(String(day)[0]);
             document.getElementById('baseNumbers').innerHTML = `
                 <div class="title">Базовые числа</div>
                 <div class="base-row"><span>N1 = Σ(${day},${month},${hour},${minute})</span><span>${n1}</span></div>
                 <div class="base-row"><span>N2 = Σ цифр(${n1})</span><span>${n2}</span></div>
-                <div class="base-row"><span>N3 = |${n1} − ${firstDigit}×2|</span><span>${n3}</span></div>
+                <div class="base-row"><span>N3 = |${n1} − ${fd}×2|</span><span>${n3}</span></div>
                 <div class="base-row"><span>N4 = Σ цифр(${n3})</span><span>${n4}</span></div>
             `;
 
-            // Show result
             document.getElementById('resultCard').classList.add('visible');
-
-            // Save to history
-            const entry = {
-                date: dateStr,
-                time: timeStr,
-                values: octane.map(o => o.value).join(' ')
-            };
-            // Avoid duplicates
-            const key = `${dateStr} ${timeStr}`;
-            const idx = history.findIndex(h => `${h.date} ${h.time}` === key);
-            if (idx >= 0) history.splice(idx, 1);
-            history.unshift(entry);
-            if (history.length > 10) history.pop();
-            localStorage.setItem('octane_history', JSON.stringify(history));
-            renderHistory();
+            document.getElementById('noteLabel').value = '';
         }
 
-        function renderHistory() {
-            if (history.length === 0) {
-                document.getElementById('historyCard').style.display = 'none';
+        // ── Save Note ──────────────────────────────────────
+
+        function saveNote() {
+            if (!lastCalc) return;
+            const label = document.getElementById('noteLabel').value.trim();
+            if (!label) {
+                document.getElementById('noteLabel').focus();
+                document.getElementById('noteLabel').style.animation = 'shake 0.4s';
+                setTimeout(() => document.getElementById('noteLabel').style.animation = '', 400);
                 return;
             }
-            document.getElementById('historyCard').style.display = 'block';
-            const html = history.map(h => `
-                <div class="history-item" onclick="setDate('${h.date}','${h.time}')">
-                    <span class="date-time">${h.date} ${h.time}</span>
-                    <span class="octane-preview">${h.values}</span>
-                </div>
-            `).join('');
-            document.getElementById('historyList').innerHTML = html;
+
+            const note = {
+                id: Date.now(),
+                label: label,
+                date: lastCalc.dateStr,
+                time: lastCalc.timeStr,
+                day: lastCalc.day,
+                month: lastCalc.month,
+                hour: lastCalc.hour,
+                minute: lastCalc.minute,
+                octane: lastCalc.octane.map(o => ({ value: o.value, original: o.original })),
+                created: new Date().toISOString()
+            };
+
+            notes.unshift(note);
+            localStorage.setItem('octane_notes', JSON.stringify(notes));
+            renderNotes();
+            showToast('📌 Заметка сохранена');
+            document.getElementById('noteLabel').value = '';
+        }
+
+        // ── Copy for Telegram ─────────────────────────────
+
+        function copyForTg(noteData) {
+            const data = noteData || lastCalc;
+            if (!data) return;
+
+            const label = noteData ? noteData.label : document.getElementById('noteLabel').value.trim();
+            const octane = data.octane;
+            const dtReduced = getDtReduced(data.day, data.month, data.hour, data.minute);
+
+            // Build emoji-marked octane lines
+            function fmtNum(o, idx) {
+                const plain = formatOctanePlain(o.value, o.original);
+                const match = getMatchType(o.value, dtReduced);
+                return match ? `${match.emoji}${plain}` : plain;
+            }
+
+            // Row 1: 1-3 | 4-6
+            const r1 = [0,1,2].map(i => fmtNum(octane[i],i)).join('  ');
+            const r2 = [3,4,5].map(i => fmtNum(octane[i],i)).join('  ');
+            // Row 2: 7-9 | 10-12
+            const r3 = [6,7,8].map(i => fmtNum(octane[i],i)).join('  ');
+            const r4 = [9,10,11].map(i => fmtNum(octane[i],i)).join('  ');
+
+            let text = '';
+            if (label) text += `${label}\n`;
+            text += `📅 ${data.date || data.dateStr}  🕐 ${data.time || data.timeStr}\n`;
+            text += `\n`;
+            text += `${r1}  │  ${r2}\n`;
+            text += `━━━━━━━━━━━━━━━━━━━━\n`;
+            text += `${r3}  │  ${r4}\n`;
+            text += `\n🟣мес 🟠день 🟢час 🔵мин`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('📋 Скопировано для Telegram');
+            }).catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = text; document.body.appendChild(ta);
+                ta.select(); document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('📋 Скопировано');
+            });
+        }
+
+        // ── Notes Rendering ────────────────────────────────
+
+        function renderNotes() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            const filtered = notes.filter(n => {
+                if (!query) return true;
+                const haystack = `${n.label} ${n.date} ${n.time}`.toLowerCase();
+                return query.split(/\s+/).every(word => haystack.includes(word));
+            });
+
+            const count = document.getElementById('notesCount');
+            count.textContent = notes.length > 0 ? `${filtered.length} из ${notes.length}` : '';
+
+            const list = document.getElementById('notesList');
+            if (filtered.length === 0) {
+                list.innerHTML = notes.length === 0
+                    ? '<div class="notes-empty">Нет заметок<br><span style="font-size:0.75rem">Сделайте расчёт и сохраните</span></div>'
+                    : '<div class="notes-empty">Ничего не найдено</div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(n => {
+                const dtReduced = getDtReduced(n.day, n.month, n.hour, n.minute);
+                function fmtO(o) {
+                    const match = getMatchType(o.value, dtReduced);
+                    const cls = match ? `hl-${match.name[0]}` : '';
+                    const plain = formatOctanePlain(o.value, o.original);
+                    return cls ? `<span class="${cls}">${plain}</span>` : plain;
+                }
+                const row1 = [0,1,2].map(i => fmtO(n.octane[i])).join('  ')
+                    + '  <span style="color:#555">|</span>  '
+                    + [3,4,5].map(i => fmtO(n.octane[i])).join('  ');
+                const row2 = [6,7,8].map(i => fmtO(n.octane[i])).join('  ')
+                    + '  <span style="color:#555">|</span>  '
+                    + [9,10,11].map(i => fmtO(n.octane[i])).join('  ');
+                const octHtml = `<div>${row1}</div><div style="border-top:1.5px solid #333;margin:4px 0;padding-top:4px">${row2}</div>`;
+
+                return `
+                <div class="note-item" id="note-${n.id}">
+                    <div class="note-header">
+                        <div class="note-label">${escHtml(n.label)}</div>
+                        <div class="note-datetime">${n.date} ${n.time}</div>
+                    </div>
+                    <div class="note-octane">${octHtml}</div>
+                    <div class="note-actions">
+                        <button class="note-btn" onclick="loadNote(${n.id})">📊 Открыть</button>
+                        <button class="note-btn" onclick="copyNoteForTg(${n.id})">📋 Для ТГ</button>
+                        <button class="note-btn delete" onclick="deleteNote(${n.id})">🗑 Удалить</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function loadNote(id) {
+            const n = notes.find(x => x.id === id);
+            if (!n) return;
+            document.getElementById('dateInput').value = n.date;
+            document.getElementById('timeInput').value = n.time;
+            calculate();
+            document.getElementById('noteLabel').value = n.label;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function copyNoteForTg(id) {
+            const n = notes.find(x => x.id === id);
+            if (!n) return;
+            copyForTg({ ...n, dateStr: n.date, timeStr: n.time });
+        }
+
+        function deleteNote(id) {
+            const idx = notes.findIndex(x => x.id === id);
+            if (idx < 0) return;
+            const el = document.getElementById(`note-${id}`);
+            if (el) {
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(40px)';
+                el.style.transition = 'all 0.25s';
+            }
+            setTimeout(() => {
+                notes.splice(idx, 1);
+                localStorage.setItem('octane_notes', JSON.stringify(notes));
+                renderNotes();
+                showToast('🗑 Удалено');
+            }, 250);
+        }
+
+        // ── Helpers ────────────────────────────────────────
+
+        function escHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 1800);
         }
 
         function shakeBtn() {
@@ -700,7 +820,6 @@
             if (v.length === 2 && !v.includes('.') && e.inputType !== 'deleteContentBackward') v += '.';
             this.value = v;
         });
-
         document.getElementById('timeInput').addEventListener('input', function(e) {
             let v = this.value.replace(/[^\d:]/g, '');
             if (v.length === 2 && !v.includes(':') && e.inputType !== 'deleteContentBackward') v += ':';
@@ -708,22 +827,228 @@
         });
 
         // Enter key
-        document.querySelectorAll('input').forEach(inp => {
+        document.querySelectorAll('#dateInput, #timeInput').forEach(inp => {
             inp.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
         });
+        document.getElementById('noteLabel').addEventListener('keydown', e => {
+            if (e.key === 'Enter') saveNote();
+        });
 
-        // Init history
-        renderHistory();
-    </script>
+        // Init
+        renderNotes();
 
-    <style>
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-6px); }
-            40% { transform: translateX(6px); }
-            60% { transform: translateX(-4px); }
-            80% { transform: translateX(4px); }
+        // ── Planets ────────────────────────────────────────
+
+        const PLANET_MAP = {
+            1: { name: 'Солнце', symbol: '☉', main: 8 },
+            2: { name: 'Луна', symbol: '☽', main: 7 },
+            3: { name: 'Марс', symbol: '♂', main: 1 },
+            4: { name: 'Меркурий', symbol: '☿', main: 5 },
+            5: { name: 'Юпитер', symbol: '♃', main: 15 },
+            6: { name: 'Венера', symbol: '♀', main: 3 },
+            7: { name: 'Сатурн', symbol: '♄', main: 16 },
+            8: { name: 'Уран', symbol: '♅', main: 17 },
+            9: { name: 'Нептун', symbol: '♆', main: 20 },
+            10: { name: 'Плутон', symbol: '♇', main: 13 }
+        };
+        const ZODIAC = ['','Овен','Телец','Близнецы','Рак','Лев','Дева','Весы','Скорпион','Стрелец','Козерог','Водолей','Рыбы'];
+        const ASTRO_BODIES = [['Sun',1],['Moon',2],['Mars',3],['Mercury',4],['Jupiter',5],['Venus',6],['Saturn',7],['Uranus',8],['Neptune',9],['Pluto',10]];
+
+        let planetPositions = null; // {houseNum: [planetNum, ...]}
+        let transitRanges = {};     // {planetNum: {start, end}}
+        let activePlanets = new Set();
+
+        function getLon(bodyName, date) {
+            try {
+                const ecl = Astronomy.EclipticGeoMoon
+                    ? (bodyName === 'Moon' ? Astronomy.EclipticGeoMoon(date) : Astronomy.Ecliptic(Astronomy.GeoVector(bodyName, date, true)))
+                    : Astronomy.Ecliptic(Astronomy.GeoVector(bodyName, date, true));
+                return ecl.elon !== undefined ? ecl.elon : ecl.lon;
+            } catch(e) { return 0; }
         }
-    </style>
+
+        function findSignChange(bodyName, startDate, direction) {
+            const date = new Date(startDate);
+            let sign = Math.floor(getLon(bodyName, date) / 30);
+            let stepDays = 1, iterations = 300;
+            if (bodyName === 'Moon') { stepDays = 0.05; iterations = 100; }
+            else if (['Sun','Mercury','Venus','Mars'].includes(bodyName)) { stepDays = 0.5; iterations = 200; }
+            else if (['Jupiter','Saturn'].includes(bodyName)) { stepDays = 15; iterations = 300; }
+            else { stepDays = 60; iterations = 400; }
+
+            let current = new Date(date);
+            for (let i = 0; i < iterations; i++) {
+                current.setTime(current.getTime() + direction * stepDays * 86400000);
+                if (Math.floor(getLon(bodyName, current) / 30) !== sign) {
+                    let t1 = new Date(current.getTime() - direction * stepDays * 86400000);
+                    let t2 = new Date(current);
+                    for (let j = 0; j < 10; j++) {
+                        let mid = new Date((t1.getTime() + t2.getTime()) / 2);
+                        if (Math.floor(getLon(bodyName, mid) / 30) === sign) t1 = mid; else t2 = mid;
+                    }
+                    return direction > 0 ? t2 : t1;
+                }
+            }
+            return null;
+        }
+
+        function calcPlanets(dateObj) {
+            if (typeof Astronomy === 'undefined') { showToast('⚠️ astronomy-engine не загружен'); return null; }
+            const result = {};
+            transitRanges = {};
+            for (let h = 1; h <= 12; h++) result[h] = [];
+            for (const [bodyName, pNum] of ASTRO_BODIES) {
+                try {
+                    const lon = getLon(bodyName, dateObj);
+                    let sign = Math.floor(lon / 30) + 1;
+                    if (sign > 12) sign = 12; if (sign < 1) sign = 1;
+                    result[sign].push(pNum);
+                    transitRanges[pNum] = {
+                        start: findSignChange(bodyName, dateObj, -1),
+                        end: findSignChange(bodyName, dateObj, 1)
+                    };
+                } catch(e) { console.error('Planet error:', bodyName, e); }
+            }
+            return result;
+        }
+
+        function fmtMoscow(d) {
+            if (!d) return '??';
+            const nd = new Date(d.getTime() + 3*3600000 + d.getTimezoneOffset()*60000);
+            return pad(nd.getDate()) + '.' + pad(nd.getMonth()+1) + ' ' + pad(nd.getHours()) + ':' + pad(nd.getMinutes());
+        }
+
+        // Calculate planets when main calculation happens
+        function calcPlanetsForCurrentDate() {
+            if (!lastCalc) return;
+            const year = new Date().getFullYear();
+            const dt = new Date(year, lastCalc.month - 1, lastCalc.day, lastCalc.hour, lastCalc.minute);
+            planetPositions = calcPlanets(dt);
+            if (!planetPositions) return;
+
+            // Show planet card
+            document.getElementById('planetCard').classList.add('visible');
+
+            // Show which planet is in which house
+            let infoHtml = '';
+            for (let h = 1; h <= 12; h++) {
+                const planets = planetPositions[h];
+                if (planets && planets.length > 0) {
+                    for (const pNum of planets) {
+                        const p = PLANET_MAP[pNum];
+                        infoHtml += `<span class="phi">${p.symbol} ${p.name} → ${h} (${ZODIAC[h]})</span>`;
+                    }
+                }
+            }
+            document.getElementById('planetHouseInfo').innerHTML = infoHtml;
+
+            // Reset active planets
+            activePlanets.clear();
+            document.querySelectorAll('.planet-btn').forEach(b => b.classList.remove('active'));
+
+            renderPlanetOctane();
+        }
+
+        function togglePlanet(pNum) {
+            if (!planetPositions) return;
+            if (activePlanets.has(pNum)) {
+                activePlanets.delete(pNum);
+                document.querySelector(`.planet-btn[data-p="${pNum}"]`).classList.remove('active');
+            } else {
+                activePlanets.add(pNum);
+                document.querySelector(`.planet-btn[data-p="${pNum}"]`).classList.add('active');
+            }
+            // Sync all-btn
+            document.getElementById('allPlanetsBtn').classList.toggle('active', activePlanets.size === 10);
+            renderPlanetOctane();
+
+            // Moon range
+            if (pNum === 2) showMoonRange();
+        }
+
+        function toggleAllPlanets() {
+            if (!planetPositions) return;
+            const allOn = activePlanets.size === 10;
+            if (allOn) {
+                activePlanets.clear();
+                document.querySelectorAll('.planet-btn').forEach(b => b.classList.remove('active'));
+            } else {
+                for (let i = 1; i <= 10; i++) activePlanets.add(i);
+                document.querySelectorAll('.planet-btn').forEach(b => b.classList.add('active'));
+            }
+            renderPlanetOctane();
+            if (activePlanets.has(2)) showMoonRange();
+            else document.getElementById('moonRange').classList.remove('visible');
+        }
+
+        function showMoonRange() {
+            const mr = document.getElementById('moonRange');
+            if (!activePlanets.has(2)) { mr.classList.remove('visible'); return; }
+            const range = transitRanges[2];
+            if (!range || !range.start || !range.end) { mr.classList.remove('visible'); return; }
+            // Find which house moon is in
+            let moonHouse = 0;
+            for (let h = 1; h <= 12; h++) {
+                if (planetPositions[h] && planetPositions[h].includes(2)) { moonHouse = h; break; }
+            }
+            mr.innerHTML = `<span class="moon-icon">☽</span> Луна в ${ZODIAC[moonHouse]}<br><span class="moon-dates">${fmtMoscow(range.start)} — ${fmtMoscow(range.end)}</span>`;
+            mr.classList.add('visible');
+        }
+
+        function renderPlanetOctane() {
+            if (!lastCalc || !planetPositions) {
+                document.getElementById('planetOctaneDisplay').innerHTML = '';
+                return;
+            }
+
+            const octane = lastCalc.octane;
+            let html = '';
+
+            function renderRow(start, end) {
+                html += '<div class="planet-result-row">';
+                for (let i = start; i < end; i++) {
+                    if (i === start + 3) html += '<div class="separator">|</div>';
+                    const houseNum = i + 1; // house 1-12
+                    const baseVal = octane[i].value;
+                    const reduced = reduce22(baseVal);
+
+                    // Sum planet main values for active planets in this house
+                    let planetAdd = 0;
+                    let planetSymbols = [];
+                    const housePlanets = planetPositions[houseNum] || [];
+                    for (const pNum of housePlanets) {
+                        if (activePlanets.has(pNum)) {
+                            planetAdd += PLANET_MAP[pNum].main;
+                            planetSymbols.push(PLANET_MAP[pNum].symbol);
+                        }
+                    }
+
+                    const finalVal = reduced + planetAdd;
+                    const hasPlanet = planetAdd > 0;
+                    const addLabel = hasPlanet ? `<span class="p-add">${planetSymbols.join('')} +${planetAdd}</span>` : '';
+
+                    html += `<div class="planet-num ${hasPlanet ? 'has-planet' : ''}">`;
+                    html += `${finalVal}`;
+                    html += `<span class="p-base">${baseVal}→${reduced}</span>`;
+                    html += addLabel;
+                    html += `</div>`;
+                }
+                html += '</div>';
+            }
+
+            renderRow(0, 6);
+            html += '<div style="text-align:center;margin:4px 0"><span class="separator bold" style="display:inline-flex;justify-content:center">━━━━━━━━━━━━━━━━━━━━</span></div>';
+            renderRow(6, 12);
+
+            document.getElementById('planetOctaneDisplay').innerHTML = html;
+        }
+
+        // Hook into calculate() — recalc planets after each main calculation
+        const _origCalculate = calculate;
+        calculate = function() {
+            _origCalculate();
+            if (lastCalc) calcPlanetsForCurrentDate();
+        };
+    </script>
 </body>
 </html>
