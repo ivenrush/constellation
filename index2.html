@@ -562,7 +562,40 @@
         // ── State ─────────────────────────────────────────
 
         let lastCalc = null; // { day, month, hour, minute, octane, dtReduced }
-        let notes = JSON.parse(localStorage.getItem('octane_notes') || '[]');
+        let notes = [];
+        const FIREBASE_URL = 'https://constellation-e9fcd-default-rtdb.europe-west1.firebasedatabase.app/notes.json';
+
+        async function fetchNotes() {
+            try {
+                const res = await fetch(FIREBASE_URL);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data) {
+                        notes = Array.isArray(data) ? data : Object.values(data);
+                        notes.sort((a, b) => b.id - a.id);
+                    }
+                    renderNotes();
+                }
+            } catch(e) {
+                console.error('Firebase load error', e);
+                showToast('⚠️ Ошибка загрузки заметок из базы');
+            }
+        }
+
+        async function saveToFirebase() {
+            try {
+                await fetch(FIREBASE_URL, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(notes)
+                });
+            } catch(e) {
+                console.error('Firebase save error', e);
+                showToast('⚠️ Ошибка сохранения в базу');
+            }
+        }
+
+        fetchNotes(); // Load on init
 
         // ── UI ─────────────────────────────────────────────
 
@@ -667,9 +700,9 @@
             };
 
             notes.unshift(note);
-            localStorage.setItem('octane_notes', JSON.stringify(notes));
+            saveToFirebase();
             renderNotes();
-            showToast('📌 Заметка сохранена');
+            showToast('📌 Заметка сохранена в облако');
             document.getElementById('noteLabel').value = '';
         }
 
@@ -799,7 +832,7 @@
             }
             setTimeout(() => {
                 notes.splice(idx, 1);
-                localStorage.setItem('octane_notes', JSON.stringify(notes));
+                saveToFirebase();
                 renderNotes();
                 showToast('🗑 Удалено');
             }, 250);
@@ -811,7 +844,7 @@
             const newLabel = prompt('Редактировать заметку:', n.label);
             if (newLabel === null || newLabel.trim() === '') return;
             n.label = newLabel.trim();
-            localStorage.setItem('octane_notes', JSON.stringify(notes));
+            saveToFirebase();
             renderNotes();
             showToast('✅ Сохранено');
         }
@@ -846,7 +879,7 @@
                     }
                     // Sort by newest first
                     notes.sort((a, b) => b.id - a.id);
-                    localStorage.setItem('octane_notes', JSON.stringify(notes));
+                    saveToFirebase();
                     renderNotes();
                     showToast(`📥 Импорт: +${added} заметок`);
                 } catch(err) {
