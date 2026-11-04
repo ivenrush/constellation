@@ -8,6 +8,9 @@
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        .hidden {
+            display: none !important;
+        }
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: #f8fafc;
@@ -69,20 +72,48 @@
             background-color: rgba(245, 158, 11, 0.2);
         }
         .q-token-hit-assembled {
-            background-color: #d1fae5 !important;
-            color: #064e3b !important;
-            border: 2px solid #10b981 !important;
-            box-shadow: 0 0 6px rgba(16, 185, 129, 0.45) !important;
+            background-color: #dcfce7 !important;
+            color: #14532d !important;
+            border: 2px solid #16a34a !important;
+            border-radius: 4px !important;
+            padding: 1px 4px !important;
+            box-shadow: 0 0 0 1px #16a34a, 0 1px 3px rgba(22, 163, 74, 0.35) !important;
             font-weight: 900 !important;
-            transform: scale(1.05);
+            transform: scale(1.08);
+            z-index: 10;
         }
         .q-token-hit-split {
             background-color: #ffe4e6 !important;
             color: #881337 !important;
-            border: 2px solid #f43f5e !important;
-            box-shadow: 0 0 6px rgba(244, 63, 94, 0.45) !important;
+            border: 2px solid #e11d48 !important;
+            border-radius: 4px !important;
+            padding: 1px 4px !important;
+            box-shadow: 0 0 0 1px #e11d48, 0 1px 3px rgba(225, 29, 72, 0.35) !important;
             font-weight: 900 !important;
-            transform: scale(1.05);
+            transform: scale(1.08);
+            z-index: 10;
+        }
+        .q-token-hit-hollow-green {
+            background-color: #f0fdf4 !important;
+            color: #15803d !important;
+            border: 2px solid #16a34a !important;
+            border-radius: 4px !important;
+            padding: 1px 4px !important;
+            box-shadow: 0 0 4px rgba(22, 163, 74, 0.35) !important;
+            font-weight: 900 !important;
+            transform: scale(1.08);
+            z-index: 10;
+        }
+        .q-token-hit-hollow-red {
+            background-color: #fff1f2 !important;
+            color: #be123c !important;
+            border: 2px solid #e11d48 !important;
+            border-radius: 4px !important;
+            padding: 1px 4px !important;
+            box-shadow: 0 0 4px rgba(225, 29, 72, 0.35) !important;
+            font-weight: 900 !important;
+            transform: scale(1.08);
+            z-index: 10;
         }
         .q-token-hit-year {
             background-color: #fef3c7 !important;
@@ -106,22 +137,15 @@
             border: 2px solid #f43f5e !important;
             background-color: #fff1f2 !important;
         }
+        .palace-cell-both {
+            border: 2px dashed #f59e0b !important;
+            background: linear-gradient(135deg, #f0fdf4 0%, #fff1f2 100%) !important;
+            box-shadow: inset 0 0 0 1px #10b981, 0 0 8px rgba(244, 63, 94, 0.25) !important;
+        }
         .analyzer-item-active {
             border-color: #2563eb !important;
             background-color: #eff6ff !important;
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25) !important;
-        }
-        .analyzer-target-axis-cell {
-            box-shadow: inset 0 0 0 1px #f59e0b;
-        }
-        .analyzer-target-month {
-            box-shadow: inset 0 0 0 2px rgba(147, 51, 234, 0.35);
-        }
-        .analyzer-target-year {
-            box-shadow: inset 0 0 0 2px rgba(217, 119, 6, 0.4);
-        }
-        .analyzer-target-both {
-            box-shadow: inset 0 0 0 2px #d97706, inset 0 0 0 3.5px rgba(147, 51, 234, 0.45);
         }
         .interactive-grid {
             display: grid;
@@ -220,11 +244,11 @@
 
                 <div class="flex items-center gap-2">
                     <div class="inline-flex rounded-lg border border-gray-300 p-0.5 bg-gray-50 text-xs">
-                        <button onclick="setStyleMode('original')" id="btnStyleOrig" class="px-2.5 py-1 font-semibold rounded-md bg-red-800 text-white shadow-sm">
-                            Канон
-                        </button>
-                        <button onclick="setStyleMode('rich')" id="btnStyleRich" class="px-2.5 py-1 font-semibold rounded-md text-gray-600 hover:text-gray-900">
+                        <button onclick="setStyleMode('rich')" id="btnStyleRich" class="px-2.5 py-1 font-semibold rounded-md bg-red-800 text-white shadow-sm">
                             Анализ
+                        </button>
+                        <button onclick="setStyleMode('original')" id="btnStyleOrig" class="px-2.5 py-1 font-semibold rounded-md text-gray-600 hover:text-gray-900">
+                            Канон
                         </button>
                     </div>
 
@@ -239,68 +263,66 @@
         <div id="chartOutputCard" class="bg-white rounded-xl shadow-lg border border-gray-200 p-3 sm:p-5">
             
             <!-- ОРИГИНАЛЬНЫЙ ВИД -->
-            <div id="viewOriginal" class="w-full flex justify-center overflow-x-auto">
+            <div id="viewOriginal" class="w-full flex justify-center overflow-x-auto hidden">
                 <div id="pan-result">
                     <p class="text-gray-400 italic text-center py-10">Загрузка расклада...</p>
                 </div>
             </div>
 
             <!-- АНАЛИТИЧЕСКИЙ ВИД (ПОМОЩНИК / АНАЛИЗАТОР) -->
-            <div id="viewRich" class="hidden space-y-4">
+            <div id="viewRich" class="space-y-4">
                 
-                <!-- 1. Информационная панель осей и постоянных столпов -->
-                <div class="bg-gradient-to-r from-amber-50/70 via-orange-50/50 to-purple-50/70 border border-amber-200 rounded-xl p-3 text-xs shadow-sm">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 border-b border-amber-200/60 pb-2 mb-2">
-                        <!-- Месяц: Лунный Генерал -->
-                        <div class="flex items-center justify-between gap-1 p-2 rounded-lg bg-white/85 border border-purple-200/70 shadow-2xs">
-                            <div class="flex items-center gap-1.5 font-bold text-purple-950 truncate">
-                                <span class="text-sm">🌙</span>
-                                <span id="analyzerChiefGenText">Месяц: --</span>
+                <!-- 1. Информационная панель постоянных столпов (Год и Месяц) -->
+                <div class="bg-gradient-to-r from-amber-50/80 via-orange-50/50 to-purple-50/80 border border-amber-200 rounded-xl p-3 text-xs shadow-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <!-- Постоянный Год -->
+                        <div id="btnPersistentYear" onclick="selectPersistentPillar('year')" 
+                             class="p-2 sm:p-2.5 rounded-lg border transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 shadow-2xs select-none bg-white/90 hover:bg-amber-50 border-amber-300 overflow-hidden">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-base shrink-0">🌟</span>
+                                <div class="min-w-0">
+                                    <div class="font-bold text-xs text-amber-950 flex items-center gap-1.5 flex-wrap">
+                                        <span>Год (年):</span>
+                                        <span id="textPersistentYearGz" class="font-mono text-sm text-gray-900 font-bold">--</span>
+                                        <span class="text-gray-400">➔</span>
+                                        <span id="textPersistentYearMerge" class="font-mono text-sm text-indigo-700 font-bold">--</span>
+                                    </div>
+                                    <div class="text-[10px] text-gray-500 mt-0.5 truncate">Клик для подсветки связей года</div>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1 font-mono text-[10px] shrink-0">
-                                <span class="px-1.5 py-0.5 rounded bg-purple-50 text-purple-900 border border-purple-200 font-bold" id="badgeMonthStat">Ст: --</span>
-                                <span class="px-1.5 py-0.5 rounded bg-purple-100 text-purple-900 border border-purple-300 font-bold" id="badgeMonthDyn">Дн: --</span>
-                            </div>
+                            <div id="badgePersistentYear" class="flex flex-wrap items-center justify-start sm:justify-end gap-1 shrink-0 max-w-full">--</div>
                         </div>
 
-                        <!-- Год: Сливающийся Год -->
-                        <div class="flex items-center justify-between gap-1 p-2 rounded-lg bg-white/85 border border-amber-200/70 shadow-2xs">
-                            <div class="flex items-center gap-1.5 font-bold text-amber-950 truncate">
-                                <span class="text-sm">🌟</span>
-                                <span id="analyzerYearText">Год: --</span>
+                        <!-- Постоянный Месяц -->
+                        <div id="btnPersistentMonth" onclick="selectPersistentPillar('month')" 
+                             class="p-2 sm:p-2.5 rounded-lg border transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 shadow-2xs select-none bg-white/90 hover:bg-purple-50 border-purple-300 overflow-hidden">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-base shrink-0">🌙</span>
+                                <div class="min-w-0">
+                                    <div class="font-bold text-xs text-purple-950 flex items-center gap-1.5 flex-wrap">
+                                        <span>Месяц (月):</span>
+                                        <span id="textPersistentMonthGz" class="font-mono text-sm text-gray-900 font-bold">--</span>
+                                        <span class="text-gray-400">➔</span>
+                                        <span id="textPersistentMonthMerge" class="font-mono text-sm text-indigo-700 font-bold">--</span>
+                                    </div>
+                                    <div class="text-[10px] text-gray-500 mt-0.5 truncate">Клик для подсветки связей месяца</div>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1 font-mono text-[10px] shrink-0">
-                                <span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200 font-bold" id="badgeYearStat">Ст: --</span>
-                                <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold" id="badgeYearDyn">Дн: --</span>
-                            </div>
+                            <div id="badgePersistentMonth" class="flex flex-wrap items-center justify-start sm:justify-end gap-1 shrink-0 max-w-full">--</div>
                         </div>
                     </div>
 
-                    <!-- Селектор осей анализа и Постоянные слияния -->
-                    <div class="flex flex-wrap items-center justify-between gap-2 text-xs pt-0.5">
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="text-gray-600 font-bold">Оси анализа:</span>
-                            <div class="inline-flex rounded-lg border border-gray-300 p-0.5 bg-white shadow-2xs text-[11px]">
-                                <button type="button" id="filterBtnAll" onclick="setAxesFilter('all')" class="px-2 py-0.5 rounded font-bold bg-amber-100 text-amber-950 shadow-xs transition cursor-pointer">
-                                    ⚡ Все (М+Г)
-                                </button>
-                                <button type="button" id="filterBtnMonth" onclick="setAxesFilter('month')" class="px-2 py-0.5 rounded font-semibold text-gray-600 hover:text-gray-900 transition cursor-pointer">
-                                    🌙 Месяц
-                                </button>
-                                <button type="button" id="filterBtnYear" onclick="setAxesFilter('year')" class="px-2 py-0.5 rounded font-semibold text-gray-600 hover:text-gray-900 transition cursor-pointer">
-                                    🌟 Год
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Постоянные столпы (Сливающийся Год и Месяц) -->
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <button type="button" id="btnPersistentYear" onclick="selectPersistentPillar('year')" class="px-2.5 py-1 rounded-lg border transition font-bold cursor-pointer text-xs flex items-center gap-1">
-                                <span>Год:</span> <span id="textPersistentYear">--</span>
-                            </button>
-                            <button type="button" id="btnPersistentMonth" onclick="selectPersistentPillar('month')" class="px-2.5 py-1 rounded-lg border transition font-bold cursor-pointer text-xs flex items-center gap-1">
-                                <span>Месяц:</span> <span id="textPersistentMonth">--</span>
-                            </button>
+                    <!-- Пояснение категорий резонанса (Кружки и паттерны) -->
+                    <div class="text-[11px] text-gray-700 px-1 pt-2 border-t border-amber-200/60 space-y-1">
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px]">
+                            <span class="inline-flex items-center gap-1 font-medium text-emerald-800"><svg class="inline-block w-3 h-3" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#16a34a"/></svg> Собр. внизу</span>
+                            <span class="inline-flex items-center gap-1 font-medium text-rose-800"><svg class="inline-block w-3 h-3" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#e11d48"/></svg> Раскол вверху</span>
+                            <span class="inline-flex items-center gap-1 font-medium text-rose-900"><svg class="inline-block w-3 h-3" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.8" fill="#ffffff" stroke="#e11d48" stroke-width="1.8"/><path d="M 1.2 8 A 6.8 6.8 0 0 1 14.8 8 Z" fill="#e11d48"/></svg> Собр. вверху</span>
+                            <span class="inline-flex items-center gap-1 font-medium text-emerald-900"><svg class="inline-block w-3 h-3" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.8" fill="#ffffff" stroke="#16a34a" stroke-width="1.8"/><path d="M 1.2 8 A 6.8 6.8 0 0 0 14.8 8 Z" fill="#16a34a"/></svg> Раскол внизу</span>
+                            <span class="inline-flex items-center gap-1 font-medium text-emerald-700"><svg class="inline-block w-3 h-3" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.8" fill="none" stroke="#16a34a" stroke-width="2.4"/></svg> Внеш. ствол собр.</span>
+                            <span class="inline-flex items-center gap-1 font-medium text-rose-700"><svg class="inline-block w-3 h-3" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.8" fill="none" stroke="#e11d48" stroke-width="2.4"/></svg> Внеш. ствол раскол</span>
+                            <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300">🏛️#6 心 Дв. 6 / Тянь Синь</span>
+                            <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">🏛️#2 芮 Дв. 2 / Тянь Жуй</span>
                         </div>
                     </div>
                 </div>
@@ -619,7 +641,7 @@
         }
 
         let currentChart = null;
-        let currentStyle = 'original';
+        let currentStyle = 'rich';
 
         // ===== Dropdown initialization and management =====
         function initDropdowns() {
@@ -1002,279 +1024,512 @@
             return palaceByNum;
         }
 
-        let currentAxesFilter = 'all'; // 'all' | 'month' | 'year'
-
-        function setAxesFilter(mode) {
-            currentAxesFilter = mode;
-            if (currentChart) {
-                renderAnalyzer();
+        function renderResonanceIcon(iconType) {
+            if (iconType === 'full_green') {
+                return `<svg class="inline-block w-3.5 h-3.5 align-middle -mt-0.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#16a34a"/></svg>`;
+            } else if (iconType === 'full_red') {
+                return `<svg class="inline-block w-3.5 h-3.5 align-middle -mt-0.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#e11d48"/></svg>`;
+            } else if (iconType === 'top_red_half') {
+                return `<svg class="inline-block w-3.5 h-3.5 align-middle -mt-0.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.8" fill="#ffffff" stroke="#e11d48" stroke-width="1.8"/><path d="M 1.2 8 A 6.8 6.8 0 0 1 14.8 8 Z" fill="#e11d48"/></svg>`;
+            } else if (iconType === 'bottom_green_half') {
+                return `<svg class="inline-block w-3.5 h-3.5 align-middle -mt-0.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.8" fill="#ffffff" stroke="#16a34a" stroke-width="1.8"/><path d="M 1.2 8 A 6.8 6.8 0 0 0 14.8 8 Z" fill="#16a34a"/></svg>`;
+            } else if (iconType === 'hollow_green') {
+                return `<svg class="inline-block w-3.5 h-3.5 align-middle -mt-0.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.8" fill="none" stroke="#16a34a" stroke-width="2.4"/></svg>`;
+            } else if (iconType === 'hollow_red') {
+                return `<svg class="inline-block w-3.5 h-3.5 align-middle -mt-0.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.8" fill="none" stroke="#e11d48" stroke-width="2.4"/></svg>`;
             }
+            return '';
         }
 
-        function calcTargetAxes(chart) {
-            // 1. MONTH (Лунный Генерал Месяца)
-            const monthBranch = chart.chiefGeneralBranch;
-            const monthName = chart.yueJiang;
-
-            const monthStatPal = BRANCH_STATIC_PALACE[monthBranch] || 4;
-            const monthStatOpp = OPPOSITE_PALACE[monthStatPal] || 6;
-            const monthStatAxis = [monthStatPal, monthStatOpp];
-
-            const monthDynItem = (chart.pDyn || []).find(x => x.branch === monthBranch);
-            const monthDynPal = monthDynItem ? monthDynItem.palaceNum : monthStatPal;
-            const monthDynOpp = OPPOSITE_PALACE[monthDynPal] || monthStatOpp;
-            const monthDynAxis = [monthDynPal, monthDynOpp];
-
-            // 2. YEAR (Сливающийся Год, например 辛未)
-            const gzYear = (chart.pillars && chart.pillars.gzYear) ? chart.pillars.gzYear : '丙午';
-            const mergeYear = getMergePillar(gzYear) || '辛未';
-            const yearBranch = mergeYear[1] || '未';
-
-            const yearStatPal = BRANCH_STATIC_PALACE[yearBranch] || 2;
-            const yearStatOpp = OPPOSITE_PALACE[yearStatPal] || 8;
-            const yearStatAxis = [yearStatPal, yearStatOpp];
-
-            const yearDynItem = (chart.pDyn || []).find(x => x.branch === yearBranch);
-            const yearDynPal = yearDynItem ? yearDynItem.palaceNum : yearStatPal;
-            const yearDynOpp = OPPOSITE_PALACE[yearDynPal] || yearStatOpp;
-            const yearDynAxis = [yearDynPal, yearDynOpp];
-
-            function axisKey(axis) {
-                const a = Math.min(axis[0], axis[1]);
-                const b = Math.max(axis[0], axis[1]);
-                return `#${a}–#${b}`;
-            }
-
-            const axesMap = new Map();
-            function addAxisInfo(axis, role, source) {
-                const key = axisKey(axis);
-                if (!axesMap.has(key)) {
-                    axesMap.set(key, {
-                        p1: Math.min(axis[0], axis[1]),
-                        p2: Math.max(axis[0], axis[1]),
-                        key: key,
-                        isMonth: false,
-                        isYear: false,
-                        monthRoles: [],
-                        yearRoles: []
-                    });
-                }
-                const entry = axesMap.get(key);
-                if (source === 'month') {
-                    entry.isMonth = true;
-                    if (!entry.monthRoles.includes(role)) entry.monthRoles.push(role);
-                } else if (source === 'year') {
-                    entry.isYear = true;
-                    if (!entry.yearRoles.includes(role)) entry.yearRoles.push(role);
-                }
-            }
-
-            addAxisInfo(monthStatAxis, 'Стат', 'month');
-            addAxisInfo(monthDynAxis, 'Дин', 'month');
-            addAxisInfo(yearStatAxis, 'Стат', 'year');
-            addAxisInfo(yearDynAxis, 'Дин', 'year');
-
-            const allAxes = Array.from(axesMap.values()).map(entry => {
-                const descParts = [];
-                if (entry.isMonth) descParts.push(`🌙 Месяц (${entry.monthRoles.join('+')})`);
-                if (entry.isYear) descParts.push(`🌟 Год (${entry.yearRoles.join('+')})`);
-                entry.desc = descParts.join(' & ') + ' ' + entry.key;
-                entry.sourceType = (entry.isMonth && entry.isYear) ? 'both' : (entry.isMonth ? 'month' : 'year');
-                return entry;
-            });
-
-            let activeAxes = allAxes;
-            if (currentAxesFilter === 'month') {
-                activeAxes = allAxes.filter(a => a.isMonth);
-            } else if (currentAxesFilter === 'year') {
-                activeAxes = allAxes.filter(a => a.isYear);
-            }
-
-            const targetPalaces = new Set();
-            for (const a of activeAxes) {
-                targetPalaces.add(a.p1);
-                targetPalaces.add(a.p2);
-            }
-
-            return {
-                monthBranch,
-                monthName,
-                monthStatAxis,
-                monthDynAxis,
-
-                gzYear,
-                mergeYear,
-                yearBranch,
-                yearStatAxis,
-                yearDynAxis,
-
-                allAxes,
-                activeAxes,
-                targetAxes: activeAxes.map(a => [a.p1, a.p2]),
-                targetPalaces,
-
-                horsePalace: chart.horsePalace,
-                horseBranch: chart.horseBranch
+        function analyzePillarGlobalMerge(stem, branch, palaceByNum, pDyn, pillarType) {
+            const matches = {
+                assembledBottom: [],
+                splitTop: [],
+                assembledTop: [],
+                splitBottom: [],
+                assembledPerim: [],
+                splitPerim: [],
+                allMatches: [],
+                hasTianXin: false,
+                hasTianRui: false
             };
-        }
+            if (!stem || !branch || !palaceByNum || !pDyn) return matches;
 
-        function analyzePillarForAxes(stem, branch, axesInfo, palaceByNum, pDyn) {
-            const matches = { assembled: [], split: [] };
-            if (!stem || !branch || !axesInfo || !palaceByNum || !pDyn) return matches;
+            const sMerge = STEM_MERGE[stem] || stem;
+            const bMerge = BRANCH_MERGE[branch] || branch;
 
-            const axesList = Array.isArray(axesInfo) 
-                ? axesInfo.map(a => ({ p1: a[0], p2: a[1], key: `#${a[0]}–#${a[1]}`, isMonth: true, isYear: true, desc: `#${a[0]}–#${a[1]}`, sourceType: 'both' }))
-                : (axesInfo.activeAxes || axesInfo.allAxes || []);
+            // Prefix labels according to temporal interval with correct Russian grammar
+            let stemPrefix = '';
+            let branchNomPrefix = '';
+            let branchGenPrefix = '';
+            if (pillarType === 'year') {
+                stemPrefix = 'годовой ';
+                branchNomPrefix = 'годовая ';
+                branchGenPrefix = 'годовой ';
+            } else if (pillarType === 'month') {
+                stemPrefix = 'месячный ';
+                branchNomPrefix = 'месячная ';
+                branchGenPrefix = 'месячной ';
+            } else if (pillarType === 'day') {
+                stemPrefix = 'дневной ';
+                branchNomPrefix = 'дневная ';
+                branchGenPrefix = 'дневной ';
+            } else if (pillarType === 'hour') {
+                stemPrefix = 'часовой ';
+                branchNomPrefix = 'часовая ';
+                branchGenPrefix = 'часовой ';
+            } else if (pillarType === 'minute') {
+                stemPrefix = 'минутный ';
+                branchNomPrefix = 'минутная ';
+                branchGenPrefix = 'минутной ';
+            }
 
-            for (const axisObj of axesList) {
-                const p1 = axisObj.p1;
-                const p2 = axisObj.p2;
-                const axisKey = axisObj.key || `#${p1}–#${p2}`;
-                const isMonth = axisObj.isMonth || false;
-                const isYear = axisObj.isYear || false;
-                const sourceDesc = axisObj.desc || axisKey;
-                const sourceType = axisObj.sourceType || 'month';
+            // Palaces for branch B
+            const bStatPalaces = [];
+            for (const [p, brs] of Object.entries(PALACE_BRANCHES)) {
+                if (brs.includes(branch)) bStatPalaces.push(parseInt(p));
+            }
+            const bDynPalaces = pDyn.filter(x => x.branch === branch).map(x => x.palaceNum);
+            const bAllPalaces = Array.from(new Set([...bStatPalaces, ...bDynPalaces]));
 
-                // 1. ASSEMBLED in p1 or in p2
-                for (const palNum of [p1, p2]) {
-                    const pal = palaceByNum[palNum];
-                    if (!pal) continue;
+            // Palaces for merged branch B_merge (Люхэ)
+            const bmStatPalaces = [];
+            for (const [p, brs] of Object.entries(PALACE_BRANCHES)) {
+                if (brs.includes(bMerge)) bmStatPalaces.push(parseInt(p));
+            }
+            const bmDynPalaces = pDyn.filter(x => x.branch === bMerge).map(x => x.palaceNum);
+            const bmAllPalaces = Array.from(new Set([...bmStatPalaces, ...bmDynPalaces]));
 
-                    const stemLocs = [];
-                    if (pal.outer_stem && pal.outer_stem.includes(stem)) stemLocs.push('Небо');
-                    if (pal.inner_stem && pal.inner_stem.includes(stem)) stemLocs.push('Земля');
-                    if (pal.star_home_stem && pal.star_home_stem.includes(stem)) stemLocs.push(`Звезда ${pal.star}`);
-                    if (pal.door_home_stem && pal.door_home_stem.includes(stem)) stemLocs.push(`Врата ${pal.gate}`);
-                    if (pal.perim_stem && pal.perim_stem.includes(stem)) stemLocs.push('Внешний ствол');
+            // Find current palace of Tian Xin (心) and Tian Rui (芮)
+            let palaceOfTianXin = null;
+            let palaceOfTianRui = null;
+            for (const [pNumStr, pal] of Object.entries(palaceByNum || {})) {
+                const pn = parseInt(pNumStr);
+                if (pal.star === '心' || pal.star === '天心') palaceOfTianXin = pn;
+                if (pal.star === '芮' || pal.star === '天芮') palaceOfTianRui = pn;
+            }
+            const stemInPalace6 = (palaceByNum && palaceByNum[6]) ? (palaceByNum[6].outer_stem || '') : '';
+            const stemInPalace2 = (palaceByNum && palaceByNum[2]) ? (palaceByNum[2].outer_stem || '') : '';
 
-                    const branchLocs = [];
-                    if (PALACE_BRANCHES[palNum] && PALACE_BRANCHES[palNum].includes(branch)) branchLocs.push('Статика');
-                    const perimMatches = pDyn.filter(x => x.palaceNum === palNum && x.branch === branch);
-                    if (perimMatches.length > 0) branchLocs.push('Периметр');
+            function addMatch(category, iconType, palaces, palaceType, tokens, text, targetStem) {
+                // Determine involvement of Palace 6 (Tian Xin) and Palace 2 (Tian Rui)
+                const touches6 = palaces.includes(6) || 
+                                 (palaceOfTianXin && palaces.includes(palaceOfTianXin)) ||
+                                 tokens.some(t => t.palace === 6 || t.palace === palaceOfTianXin) ||
+                                 (targetStem && stemInPalace6 && stemInPalace6.includes(targetStem));
 
-                    if (stemLocs.length > 0 && branchLocs.length > 0) {
-                        matches.assembled.push({
-                            axis: axisKey,
-                            palace: palNum,
-                            stemLocs: stemLocs,
-                            branchLocs: branchLocs,
-                            stem: stem,
-                            branch: branch,
-                            isMonth,
-                            isYear,
-                            sourceDesc,
-                            sourceType
-                        });
-                    }
+                const touches2 = palaces.includes(2) || 
+                                 (palaceOfTianRui && palaces.includes(palaceOfTianRui)) ||
+                                 tokens.some(t => t.palace === 2 || t.palace === palaceOfTianRui) ||
+                                 (targetStem && stemInPalace2 && stemInPalace2.includes(targetStem));
+
+                if (touches6) matches.hasTianXin = true;
+                if (touches2) matches.hasTianRui = true;
+
+                // Badges for Tian Xin and Tian Rui
+                const starBadges = [];
+                if (touches6) {
+                    starBadges.push(`<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10.5px] font-extrabold bg-blue-100 text-blue-900 border border-blue-300 shadow-2xs whitespace-nowrap" title="Задействован Дворец #6 (Цянь) или Звезда Тянь Синь [心]">🏛️#6 心</span>`);
+                }
+                if (touches2) {
+                    starBadges.push(`<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10.5px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs whitespace-nowrap" title="Задействован Дворец #2 (Кунь) или Звезда Тянь Жуй [芮]">🏛️#2 芮</span>`);
                 }
 
-                // 2. SPLIT between (p1, p2) or (p2, p1)
-                for (const [sPalNum, bPalNum] of [[p1, p2], [p2, p1]]) {
-                    const sPal = palaceByNum[sPalNum];
-                    const bPal = palaceByNum[bPalNum];
-                    if (!sPal || !bPal) continue;
+                const item = {
+                    category,
+                    iconType,
+                    iconHtml: renderResonanceIcon(iconType),
+                    palaces,
+                    palaceType,
+                    tokens,
+                    text,
+                    touches6,
+                    touches2,
+                    starBadgesHtml: starBadges.join(' ')
+                };
 
-                    const stemLocs = [];
-                    if (sPal.outer_stem && sPal.outer_stem.includes(stem)) stemLocs.push('Небо');
-                    if (sPal.inner_stem && sPal.inner_stem.includes(stem)) stemLocs.push('Земля');
-                    if (sPal.star_home_stem && sPal.star_home_stem.includes(stem)) stemLocs.push(`Звезда ${sPal.star}`);
-                    if (sPal.door_home_stem && sPal.door_home_stem.includes(stem)) stemLocs.push(`Врата ${sPal.gate}`);
-                    if (sPal.perim_stem && sPal.perim_stem.includes(stem)) stemLocs.push('Внешний ствол');
+                if (category === 'assembled_bottom') matches.assembledBottom.push(item);
+                else if (category === 'split_top') matches.splitTop.push(item);
+                else if (category === 'assembled_top') matches.assembledTop.push(item);
+                else if (category === 'split_bottom') matches.splitBottom.push(item);
+                else if (category === 'assembled_perim') matches.assembledPerim.push(item);
+                else if (category === 'split_perim') matches.splitPerim.push(item);
 
-                    const branchLocs = [];
-                    if (PALACE_BRANCHES[bPalNum] && PALACE_BRANCHES[bPalNum].includes(branch)) branchLocs.push('Статика');
-                    const perimMatches = pDyn.filter(x => x.palaceNum === bPalNum && x.branch === branch);
-                    if (perimMatches.length > 0) branchLocs.push('Периметр');
+                matches.allMatches.push(item);
+            }
 
-                    if (stemLocs.length > 0 && branchLocs.length > 0) {
-                        matches.split.push({
-                            axis: axisKey,
-                            stemPalace: sPalNum,
-                            branchPalace: bPalNum,
-                            stemLocs: stemLocs,
-                            branchLocs: branchLocs,
-                            stem: stem,
-                            branch: branch,
-                            isMonth,
-                            isYear,
-                            sourceDesc,
-                            sourceType
-                        });
-                    }
+            // ==========================================
+            // 1. ASSEMBLED BOTTOM (Земля/Врата во дворце ветви)
+            // ==========================================
+            // 1A. S_merge in palaces of B
+            for (const pNum of bAllPalaces) {
+                const pal = palaceByNum[pNum];
+                if (!pal) continue;
+                const locs = [];
+                const tokens = [];
+                if (pal.inner_stem && pal.inner_stem.includes(sMerge)) {
+                    locs.push('Земле');
+                    tokens.push({ palace: pNum, role: 'inner_stem', val: sMerge, hitClass: 'q-token-hit-assembled' });
+                }
+                if (pal.door_home_stem && pal.door_home_stem.includes(sMerge)) {
+                    locs.push(`Вратах [${pal.gate}]`);
+                    tokens.push({ palace: pNum, role: 'door_home_stem', val: sMerge, hitClass: 'q-token-hit-assembled' });
+                }
+                if (locs.length > 0) {
+                    const bTypes = [];
+                    if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
+                    if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-assembled' });
+                    const text = `<b>Собранность (Внизу):</b> ${stemPrefix}Люхэ-ствол <b>${sMerge}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ${branchGenPrefix}ветви <b>${branch}</b> (${bTypes.join(', ')})`;
+                    addMatch('assembled_bottom', 'full_green', [pNum], 'assembled', tokens, text, sMerge);
                 }
             }
+
+            // 1B. S in palaces of B_merge
+            for (const pNum of bmAllPalaces) {
+                const pal = palaceByNum[pNum];
+                if (!pal) continue;
+                const locs = [];
+                const tokens = [];
+                if (pal.inner_stem && pal.inner_stem.includes(stem)) {
+                    locs.push('Земле');
+                    tokens.push({ palace: pNum, role: 'inner_stem', val: stem, hitClass: 'q-token-hit-assembled' });
+                }
+                if (pal.door_home_stem && pal.door_home_stem.includes(stem)) {
+                    locs.push(`Вратах [${pal.gate}]`);
+                    tokens.push({ palace: pNum, role: 'door_home_stem', val: stem, hitClass: 'q-token-hit-assembled' });
+                }
+                if (locs.length > 0) {
+                    const bmTypes = [];
+                    if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
+                    if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-assembled' });
+                    const text = `<b>Собранность (Внизу):</b> ${stemPrefix}ствол <b>${stem}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ветви Люхэ <b>${bMerge}</b> (${bmTypes.join(', ')})`;
+                    addMatch('assembled_bottom', 'full_green', [pNum], 'assembled', tokens, text, stem);
+                }
+            }
+
+            /* Временно отключено: поиск дополнительного того же ствола (будет вводиться постепенно)
+            // if (hasProperBottom_B && !hasProperBottom_Bm) { ... }
+            */
+
+            // ==========================================
+            // 2. SPLIT TOP (Небо/Звезда напротив ветви)
+            // ==========================================
+            // 2A. B in palace, S_merge opposite at TOP
+            for (const pNum of bAllPalaces) {
+                const oppNum = OPPOSITE_PALACE[pNum];
+                const oppPal = palaceByNum[oppNum];
+                if (!oppPal) continue;
+                const locs = [];
+                const tokens = [];
+                if (oppPal.outer_stem && oppPal.outer_stem.includes(sMerge)) {
+                    locs.push('Небе');
+                    tokens.push({ palace: oppNum, role: 'outer_stem', val: sMerge, hitClass: 'q-token-hit-split' });
+                }
+                if (oppPal.star_home_stem && oppPal.star_home_stem.includes(sMerge)) {
+                    locs.push(`Звезде [${oppPal.star}]`);
+                    tokens.push({ palace: oppNum, role: 'star_home_stem', val: sMerge, hitClass: 'q-token-hit-split' });
+                }
+                if (locs.length > 0) {
+                    const bTypes = [];
+                    if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
+                    if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-split' });
+                    const text = `<b>Раскол (Вверху):</b> ${branchNomPrefix}ветвь <b>${branch}</b> во Дв. #${pNum} (${bTypes.join(', ')}) ↔ ${stemPrefix}Люхэ-ствол <b>${sMerge}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
+                    addMatch('split_top', 'full_red', [pNum, oppNum], 'split', tokens, text, sMerge);
+                }
+            }
+
+            // 2B. B_merge in palace, S opposite at TOP
+            for (const pNum of bmAllPalaces) {
+                const oppNum = OPPOSITE_PALACE[pNum];
+                const oppPal = palaceByNum[oppNum];
+                if (!oppPal) continue;
+                const locs = [];
+                const tokens = [];
+                if (oppPal.outer_stem && oppPal.outer_stem.includes(stem)) {
+                    locs.push('Небе');
+                    tokens.push({ palace: oppNum, role: 'outer_stem', val: stem, hitClass: 'q-token-hit-split' });
+                }
+                if (oppPal.star_home_stem && oppPal.star_home_stem.includes(stem)) {
+                    locs.push(`Звезде [${oppPal.star}]`);
+                    tokens.push({ palace: oppNum, role: 'star_home_stem', val: stem, hitClass: 'q-token-hit-split' });
+                }
+                if (locs.length > 0) {
+                    const bmTypes = [];
+                    if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
+                    if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-split' });
+                    const text = `<b>Раскол (Вверху):</b> ветвь Люхэ <b>${bMerge}</b> во Дв. #${pNum} (${bmTypes.join(', ')}) ↔ ${stemPrefix}ствол <b>${stem}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
+                    addMatch('split_top', 'full_red', [pNum, oppNum], 'split', tokens, text, stem);
+                }
+            }
+
+            /* Временно отключено: дополнительный тот же ствол вверху */
+
+            // ==========================================
+            // 3. ASSEMBLED TOP (Небо/Звезда во дворце ветви)
+            // ==========================================
+            // 3A. S_merge in palaces of B at TOP
+            for (const pNum of bAllPalaces) {
+                const pal = palaceByNum[pNum];
+                if (!pal) continue;
+                const locs = [];
+                const tokens = [];
+                if (pal.outer_stem && pal.outer_stem.includes(sMerge)) {
+                    locs.push('Небе');
+                    tokens.push({ palace: pNum, role: 'outer_stem', val: sMerge, hitClass: 'q-token-hit-split' });
+                }
+                if (pal.star_home_stem && pal.star_home_stem.includes(sMerge)) {
+                    locs.push(`Звезде [${pal.star}]`);
+                    tokens.push({ palace: pNum, role: 'star_home_stem', val: sMerge, hitClass: 'q-token-hit-split' });
+                }
+                if (locs.length > 0) {
+                    const bTypes = [];
+                    if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
+                    if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-split' });
+                    const text = `<b>Собранность (Вверху):</b> ${stemPrefix}Люхэ-ствол <b>${sMerge}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ${branchGenPrefix}ветви <b>${branch}</b> (${bTypes.join(', ')})`;
+                    addMatch('assembled_top', 'top_red_half', [pNum], 'split', tokens, text, sMerge);
+                }
+            }
+
+            // 3B. S in palaces of B_merge at TOP
+            for (const pNum of bmAllPalaces) {
+                const pal = palaceByNum[pNum];
+                if (!pal) continue;
+                const locs = [];
+                const tokens = [];
+                if (pal.outer_stem && pal.outer_stem.includes(stem)) {
+                    locs.push('Небе');
+                    tokens.push({ palace: pNum, role: 'outer_stem', val: stem, hitClass: 'q-token-hit-split' });
+                }
+                if (pal.star_home_stem && pal.star_home_stem.includes(stem)) {
+                    locs.push(`Звезде [${pal.star}]`);
+                    tokens.push({ palace: pNum, role: 'star_home_stem', val: stem, hitClass: 'q-token-hit-split' });
+                }
+                if (locs.length > 0) {
+                    const bmTypes = [];
+                    if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
+                    if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-split' });
+                    const text = `<b>Собранность (Вверху):</b> ${stemPrefix}ствол <b>${stem}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ветви Люхэ <b>${bMerge}</b> (${bmTypes.join(', ')})`;
+                    addMatch('assembled_top', 'top_red_half', [pNum], 'split', tokens, text, stem);
+                }
+            }
+
+            /* Временно отключено: дополнительный тот же ствол вверху */
+
+            // ==========================================
+            // 4. SPLIT BOTTOM (Земля/Врата напротив ветви)
+            // ==========================================
+            // 4A. B in palace, S_merge opposite at BOTTOM
+            for (const pNum of bAllPalaces) {
+                const oppNum = OPPOSITE_PALACE[pNum];
+                const oppPal = palaceByNum[oppNum];
+                if (!oppPal) continue;
+                const locs = [];
+                const tokens = [];
+                if (oppPal.inner_stem && oppPal.inner_stem.includes(sMerge)) {
+                    locs.push('Земле');
+                    tokens.push({ palace: oppNum, role: 'inner_stem', val: sMerge, hitClass: 'q-token-hit-assembled' });
+                }
+                if (oppPal.door_home_stem && oppPal.door_home_stem.includes(sMerge)) {
+                    locs.push(`Вратах [${oppPal.gate}]`);
+                    tokens.push({ palace: oppNum, role: 'door_home_stem', val: sMerge, hitClass: 'q-token-hit-assembled' });
+                }
+                if (locs.length > 0) {
+                    const bTypes = [];
+                    if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
+                    if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-assembled' });
+                    const text = `<b>Раскол (Внизу):</b> ${branchNomPrefix}ветвь <b>${branch}</b> во Дв. #${pNum} (${bTypes.join(', ')}) ↔ ${stemPrefix}Люхэ-ствол <b>${sMerge}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
+                    addMatch('split_bottom', 'bottom_green_half', [pNum, oppNum], 'assembled', tokens, text, sMerge);
+                }
+            }
+
+            // 4B. B_merge in palace, S opposite at BOTTOM
+            for (const pNum of bmAllPalaces) {
+                const oppNum = OPPOSITE_PALACE[pNum];
+                const oppPal = palaceByNum[oppNum];
+                if (!oppPal) continue;
+                const locs = [];
+                const tokens = [];
+                if (oppPal.inner_stem && oppPal.inner_stem.includes(stem)) {
+                    locs.push('Земле');
+                    tokens.push({ palace: oppNum, role: 'inner_stem', val: stem, hitClass: 'q-token-hit-assembled' });
+                }
+                if (oppPal.door_home_stem && oppPal.door_home_stem.includes(stem)) {
+                    locs.push(`Вратах [${oppPal.gate}]`);
+                    tokens.push({ palace: oppNum, role: 'door_home_stem', val: stem, hitClass: 'q-token-hit-assembled' });
+                }
+                if (locs.length > 0) {
+                    const bmTypes = [];
+                    if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
+                    if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-assembled' });
+                    const text = `<b>Раскол (Внизу):</b> ветвь Люхэ <b>${bMerge}</b> во Дв. #${pNum} (${bmTypes.join(', ')}) ↔ ${stemPrefix}ствол <b>${stem}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
+                    addMatch('split_bottom', 'bottom_green_half', [pNum, oppNum], 'assembled', tokens, text, stem);
+                }
+            }
+
+            /* Временно отключено: дополнительный тот же ствол внизу */
+
+            // ==========================================
+            // 5. ASSEMBLED PERIMETER (Внешний ствол над ветвью)
+            // ==========================================
+            for (const pNum of bAllPalaces) {
+                const pal = palaceByNum[pNum];
+                if (!pal || !pal.perim_stem) continue;
+                if (pal.perim_stem.includes(sMerge)) {
+                    const bTypes = [];
+                    const tokens = [
+                        { palace: pNum, role: 'perim_stem', val: sMerge, hitClass: 'q-token-hit-hollow-green' }
+                    ];
+                    if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
+                    if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-hollow-green' });
+                    const text = `<b>Собранность внешнего ствола:</b> ${stemPrefix}Люхэ-внешний ствол <b>${sMerge}</b> над Дв. #${pNum} в доме ${branchGenPrefix}ветви <b>${branch}</b> (${bTypes.join(', ')})`;
+                    addMatch('assembled_perim', 'hollow_green', [pNum], 'assembled', tokens, text, sMerge);
+                }
+            }
+            for (const pNum of bmAllPalaces) {
+                const pal = palaceByNum[pNum];
+                if (!pal || !pal.perim_stem) continue;
+                if (pal.perim_stem.includes(stem)) {
+                    const bmTypes = [];
+                    const tokens = [
+                        { palace: pNum, role: 'perim_stem', val: stem, hitClass: 'q-token-hit-hollow-green' }
+                    ];
+                    if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
+                    if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-hollow-green' });
+                    const text = `<b>Собранность внешнего ствола:</b> ${stemPrefix}внешний ствол <b>${stem}</b> над Дв. #${pNum} в доме ветви Люхэ <b>${bMerge}</b> (${bmTypes.join(', ')})`;
+                    addMatch('assembled_perim', 'hollow_green', [pNum], 'assembled', tokens, text, stem);
+                }
+            }
+
+            // ==========================================
+            // 6. SPLIT PERIMETER (Внешний ствол напротив ветви)
+            // ==========================================
+            for (const pNum of bAllPalaces) {
+                const oppNum = OPPOSITE_PALACE[pNum];
+                const oppPal = palaceByNum[oppNum];
+                if (!oppPal || !oppPal.perim_stem) continue;
+                if (oppPal.perim_stem.includes(sMerge)) {
+                    const bTypes = [];
+                    const tokens = [
+                        { palace: oppNum, role: 'perim_stem', val: sMerge, hitClass: 'q-token-hit-hollow-red' }
+                    ];
+                    if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
+                    if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-hollow-red' });
+                    const text = `<b>Раскол внешнего ствола:</b> ${branchNomPrefix}ветвь <b>${branch}</b> во Дв. #${pNum} (${bTypes.join(', ')}) ↔ ${stemPrefix}Люхэ-внешний ствол <b>${sMerge}</b> напротив над Дв. #${oppNum}`;
+                    addMatch('split_perim', 'hollow_red', [pNum, oppNum], 'split', tokens, text, sMerge);
+                }
+            }
+            for (const pNum of bmAllPalaces) {
+                const oppNum = OPPOSITE_PALACE[pNum];
+                const oppPal = palaceByNum[oppNum];
+                if (!oppPal || !oppPal.perim_stem) continue;
+                if (oppPal.perim_stem.includes(stem)) {
+                    const bmTypes = [];
+                    const tokens = [
+                        { palace: oppNum, role: 'perim_stem', val: stem, hitClass: 'q-token-hit-hollow-red' }
+                    ];
+                    if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
+                    if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
+                    tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-hollow-red' });
+                    const text = `<b>Раскол внешнего ствола:</b> ветвь Люхэ <b>${bMerge}</b> во Дв. #${pNum} (${bmTypes.join(', ')}) ↔ ${stemPrefix}внешний ствол <b>${stem}</b> напротив над Дв. #${oppNum}`;
+                    addMatch('split_perim', 'hollow_red', [pNum, oppNum], 'split', tokens, text, stem);
+                }
+            }
+
             return matches;
+        }
+
+        function formatStatusBadge(match) {
+            if (!match || match.allMatches.length === 0) {
+                return `<span class="text-gray-400 text-xs">—</span>`;
+            }
+            const badges = [];
+            // 1. Bottom Assembled
+            if (match.assembledBottom && match.assembledBottom.length > 0) {
+                badges.push(`<span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200" title="Собранность внизу (Земля/Врата)">${renderResonanceIcon('full_green')} ${match.assembledBottom.length}</span>`);
+            }
+            // 2. Top Split
+            if (match.splitTop && match.splitTop.length > 0) {
+                badges.push(`<span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200" title="Раскол вверху (Небо/Звезда)">${renderResonanceIcon('full_red')} ${match.splitTop.length}</span>`);
+            }
+            // 3. Top Assembled
+            if (match.assembledTop && match.assembledTop.length > 0) {
+                badges.push(`<span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[11px] font-bold bg-rose-50/70 text-rose-900 border border-rose-200" title="Собранность вверху (Небо/Звезда)">${renderResonanceIcon('top_red_half')} ${match.assembledTop.length}</span>`);
+            }
+            // 4. Bottom Split
+            if (match.splitBottom && match.splitBottom.length > 0) {
+                badges.push(`<span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[11px] font-bold bg-emerald-50/70 text-emerald-900 border border-emerald-200" title="Раскол внизу (Земля/Врата)">${renderResonanceIcon('bottom_green_half')} ${match.splitBottom.length}</span>`);
+            }
+            // 5. External Perim
+            if (match.assembledPerim && match.assembledPerim.length > 0) {
+                badges.push(`<span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[11px] font-bold bg-emerald-50/60 text-emerald-800 border border-emerald-300" title="Собранность внешнего ствола">${renderResonanceIcon('hollow_green')} ${match.assembledPerim.length}</span>`);
+            }
+            if (match.splitPerim && match.splitPerim.length > 0) {
+                badges.push(`<span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[11px] font-bold bg-rose-50/60 text-rose-800 border border-rose-300" title="Раскол внешнего ствола">${renderResonanceIcon('hollow_red')} ${match.splitPerim.length}</span>`);
+            }
+
+            // Special indicators for Palace 6 (Tian Xin) and Palace 2 (Tian Rui)
+            if (match.hasTianXin) {
+                badges.push(`<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-blue-100 text-blue-900 border border-blue-300 shadow-2xs whitespace-nowrap" title="Задействован Дворец #6 (Цянь) или Звезда Тянь Синь [心]">#6心</span>`);
+            }
+            if (match.hasTianRui) {
+                badges.push(`<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs whitespace-nowrap" title="Задействован Дворец #2 (Кунь) или Звезда Тянь Жуй [芮]">#2芮</span>`);
+            }
+
+            return badges.join(' ');
         }
 
         function renderChart() {
             if (!currentChart) return;
-
-            // 1. ОРИГИНАЛЬНЫЙ КИТАЙСКИЙ ВИД
             document.getElementById('pan-result').innerHTML = currentChart.rawHtml;
-
-            // 2. АНАЛИТИЧЕСКИЙ ПОМОЩНИК
             renderAnalyzer();
         }
 
         function renderAnalyzer() {
             if (!currentChart) return;
-            const axesInfo = calcTargetAxes(currentChart);
-
-            // 1. Update Info Bar
-            const chiefGenEl = document.getElementById('analyzerChiefGenText');
-            if (chiefGenEl) chiefGenEl.innerText = `Месяц: ${axesInfo.monthName} (${axesInfo.monthBranch})`;
-
-            const badgeMonthStat = document.getElementById('badgeMonthStat');
-            if (badgeMonthStat) badgeMonthStat.innerText = `Ст: #${axesInfo.monthStatAxis[0]}–#${axesInfo.monthStatAxis[1]}`;
-
-            const badgeMonthDyn = document.getElementById('badgeMonthDyn');
-            if (badgeMonthDyn) badgeMonthDyn.innerText = `Дн: #${axesInfo.monthDynAxis[0]}–#${axesInfo.monthDynAxis[1]}`;
-
-            const yearEl = document.getElementById('analyzerYearText');
-            if (yearEl) yearEl.innerText = `Год: ${axesInfo.gzYear} ➔ ${axesInfo.mergeYear} (${axesInfo.yearBranch})`;
-
-            const badgeYearStat = document.getElementById('badgeYearStat');
-            if (badgeYearStat) badgeYearStat.innerText = `Ст: #${axesInfo.yearStatAxis[0]}–#${axesInfo.yearStatAxis[1]}`;
-
-            const badgeYearDyn = document.getElementById('badgeYearDyn');
-            if (badgeYearDyn) badgeYearDyn.innerText = `Дн: #${axesInfo.yearDynAxis[0]}–#${axesInfo.yearDynAxis[1]}`;
-
-            // Filter button styles
-            const btnAll = document.getElementById('filterBtnAll');
-            const btnMonth = document.getElementById('filterBtnMonth');
-            const btnYear = document.getElementById('filterBtnYear');
-            const activeFilterClass = "px-2 py-0.5 rounded font-bold bg-amber-100 text-amber-950 shadow-xs transition cursor-pointer";
-            const inactiveFilterClass = "px-2 py-0.5 rounded font-semibold text-gray-600 hover:text-gray-900 transition cursor-pointer";
-
-            if (btnAll) btnAll.className = (currentAxesFilter === 'all') ? activeFilterClass : inactiveFilterClass;
-            if (btnMonth) btnMonth.className = (currentAxesFilter === 'month') ? activeFilterClass : inactiveFilterClass;
-            if (btnYear) btnYear.className = (currentAxesFilter === 'year') ? activeFilterClass : inactiveFilterClass;
-
-            // 2. Render Interactive Grid
-            renderInteractiveGrid(currentChart.palaceByNum, currentChart.pDyn, axesInfo);
-
-            // 3. Render Persistent Pillars (Year & Month)
-            renderPersistentPillars(currentChart, axesInfo);
-
-            // 4. Render Lists (Days, Hours & Minutes)
-            renderDaysAssistant(currentChart, axesInfo);
-            renderHoursAssistant(currentChart, axesInfo);
-            renderMinutesAssistant(currentChart, axesInfo);
-
-            // Clear any old highlight
+            renderInteractiveGrid(currentChart.palaceByNum, currentChart.pDyn);
+            renderPersistentPillars(currentChart);
+            renderDaysAssistant(currentChart);
+            renderHoursAssistant(currentChart);
+            renderMinutesAssistant(currentChart);
             resetAnalyzerHighlight();
         }
 
-        function renderInteractiveGrid(palaceByNum, pDyn, axesInfo) {
+        function renderInteractiveGrid(palaceByNum, pDyn) {
             const container = document.getElementById('interactiveTextGridContainer');
             if (!container) return;
-
-            const targetPalaces = axesInfo.targetPalaces || new Set();
 
             function perimCellHtml(p) {
                 if (!p) return `<div class="bg-gray-100 flex items-center justify-center text-[10px] text-gray-300"></div>`;
                 const markHtml = p.mark ? `<span class="text-[11px] font-extrabold text-emerald-600 leading-none">${p.mark}</span>` : '';
-                const stemHtml = p.stem ? `<span class="q-token text-gray-900 font-extrabold text-xs sm:text-sm leading-none mt-0.5 px-1 py-0.5 rounded bg-amber-50/90 border border-amber-300 hover:bg-amber-100 cursor-pointer shadow-2xs" onclick="event.stopPropagation(); onChartTokenClick(this)" data-type="perim_stem" data-palace="${p.palaceNum}" data-val="${p.stem}" title="Внешний ствол над #${p.palaceNum}: ${p.stem}">${p.stem}</span>` : '';
+                const stemHtml = p.stem ? `<span class="q-token text-gray-900 font-extrabold text-xs sm:text-sm leading-none px-1 py-0.5 rounded bg-amber-50/90 border border-amber-300 hover:bg-amber-100 cursor-pointer shadow-2xs" onclick="event.stopPropagation(); onChartTokenClick(this)" data-type="perim_stem" data-palace="${p.palaceNum}" data-val="${p.stem}" title="Внешний ствол над #${p.palaceNum}: ${p.stem}">${p.stem}</span>` : '';
+
+                const isHorizontal = (p.palaceNum === 9 || p.palaceNum === 1);
+
+                if (isHorizontal) {
+                    return `
+                        <div class="bg-gray-50 hover:bg-amber-50/70 p-0.5 flex flex-row items-center justify-center gap-1.5 text-center select-none"
+                             title="Периметр над #${p.palaceNum}: ${p.branch} (${p.jianchu})${p.stem ? ', ствол ' + p.stem : ''}">
+                            <div class="flex items-center gap-0.5 leading-none cursor-pointer" onclick="event.stopPropagation(); onChartTokenClick(this.querySelector('[data-type=perim_branch]'))">
+                                <span class="q-token text-red-600 font-bold text-xs sm:text-sm" data-type="perim_branch" data-palace="${p.palaceNum}" data-val="${p.branch}">${p.branch}</span>
+                                ${markHtml}
+                            </div>
+                            ${stemHtml}
+                            <span class="q-token text-blue-600 text-[11px] font-semibold leading-none cursor-pointer" onclick="event.stopPropagation(); onChartTokenClick(this)" data-type="jianchu" data-palace="${p.palaceNum}" data-val="${p.jianchu}">${p.jianchu}</span>
+                        </div>
+                    `;
+                }
+
                 return `
                     <div class="bg-gray-50 hover:bg-amber-50/70 p-0.5 flex flex-col items-center justify-center text-center select-none"
                          title="Периметр над #${p.palaceNum}: ${p.branch} (${p.jianchu})${p.stem ? ', ствол ' + p.stem : ''}">
@@ -1289,72 +1544,35 @@
             }
 
             function cornerCellHtml(cornerPalNum) {
-                const isHorse = (axesInfo.horsePalace === cornerPalNum);
+                const isHorse = (currentChart && currentChart.horsePalace === cornerPalNum);
                 const horseHtml = isHorse ? `<span class="q-token text-red-600 font-extrabold text-sm sm:text-base animate-pulse cursor-pointer px-1 py-0.5 rounded hover:bg-red-100" onclick="event.stopPropagation(); onChartTokenClick(this)" data-type="horse" data-palace="${cornerPalNum}" data-val="马" title="Путешествующая Лошадь (驿马) во Дворце #${cornerPalNum}">马</span>` : '';
                 return `<div class="bg-gray-200/50 flex flex-col items-center justify-center text-center select-none p-1">${horseHtml}</div>`;
             }
 
             function palaceCellHtml(pNum) {
                 const pal = palaceByNum[pNum] || {};
-                const isTarget = targetPalaces.has(pNum);
-
-                const mStat = (axesInfo.monthStatAxis || []).includes(pNum);
-                const mDyn = (axesInfo.monthDynAxis || []).includes(pNum);
-                const yStat = (axesInfo.yearStatAxis || []).includes(pNum);
-                const yDyn = (axesInfo.yearDynAxis || []).includes(pNum);
-
-                let isMonthPal = (mStat || mDyn) && (currentAxesFilter === 'all' || currentAxesFilter === 'month');
-                let isYearPal = (yStat || yDyn) && (currentAxesFilter === 'all' || currentAxesFilter === 'year');
-
-                let targetClass = '';
-                if (isMonthPal && isYearPal) targetClass = 'analyzer-target-both';
-                else if (isMonthPal) targetClass = 'analyzer-target-month';
-                else if (isYearPal) targetClass = 'analyzer-target-year';
-
-                let axisBadge = '';
-                if (currentAxesFilter === 'all') {
-                    if ((mStat || mDyn) && (yStat || yDyn)) {
-                        let mStr = (mStat && mDyn) ? 'С+Д' : (mStat ? 'Ст' : 'Дн');
-                        let yStr = (yStat && yDyn) ? 'С+Д' : (yStat ? 'Ст' : 'Дн');
-                        axisBadge = `<span class="text-[8px] sm:text-[9px] px-1 py-0.2 rounded bg-gradient-to-r from-purple-100 to-amber-100 text-amber-950 font-bold border border-amber-300 shadow-2xs" title="Оси: Месяц (${mStr}) + Год (${yStr})">⚡М+Г</span>`;
-                    } else if (mStat || mDyn) {
-                        let mStr = (mStat && mDyn) ? 'С+Д' : (mStat ? 'Стат' : 'Дин');
-                        axisBadge = `<span class="text-[8px] sm:text-[9px] px-1 py-0.2 rounded bg-purple-50 text-purple-700 font-bold border border-purple-200" title="Ось Месяца (${mStr})">🌙М-${mStr}</span>`;
-                    } else if (yStat || yDyn) {
-                        let yStr = (yStat && yDyn) ? 'С+Д' : (yStat ? 'Стат' : 'Дин');
-                        axisBadge = `<span class="text-[8px] sm:text-[9px] px-1 py-0.2 rounded bg-amber-50 text-amber-800 font-bold border border-amber-200" title="Ось Года (${yStr})">🌟Г-${yStr}</span>`;
-                    }
-                } else if (currentAxesFilter === 'month') {
-                    if (mStat || mDyn) {
-                        let mStr = (mStat && mDyn) ? 'С+Д' : (mStat ? 'Стат' : 'Дин');
-                        axisBadge = `<span class="text-[8px] sm:text-[9px] px-1 py-0.2 rounded bg-purple-100 text-purple-800 font-bold border border-purple-300" title="Ось Месяца (${mStr})">🌙М-${mStr}</span>`;
-                    }
-                } else if (currentAxesFilter === 'year') {
-                    if (yStat || yDyn) {
-                        let yStr = (yStat && yDyn) ? 'С+Д' : (yStat ? 'Стат' : 'Дин');
-                        axisBadge = `<span class="text-[8px] sm:text-[9px] px-1 py-0.2 rounded bg-amber-100 text-amber-900 font-bold border border-amber-300" title="Ось Года (${yStr})">🌟Г-${yStr}</span>`;
-                    }
-                }
-
                 const statBranches = (PALACE_BRANCHES[pNum] || []).join('');
 
                 return `
-                    <div id="palace-cell-${pNum}" class="bg-white p-1 sm:p-1.5 flex flex-col justify-between transition-all select-none border border-gray-100 ${targetClass}">
-                        <!-- Верхняя строка: Дух, Статическая ветвь, Номер дворца -->
+                    <div id="palace-cell-${pNum}" class="bg-white p-1 sm:p-1.5 flex flex-col justify-between transition-all select-none border border-gray-100">
+                        <!-- Верхняя строка: Дух, Статическая ветвь, Номер дворца + Звезда Цянь/Кунь -->
                         <div class="flex items-center justify-between text-xs pb-0.5 border-b border-gray-100">
                             <span class="q-token text-red-600 font-bold text-xs sm:text-sm" onclick="onChartTokenClick(this)" data-type="spirit" data-palace="${pNum}" data-val="${pal.spirit}">${pal.spirit || '&nbsp;'}</span>
-                            <div class="flex items-center gap-1">
-                                <span class="q-token text-red-500 font-bold text-[11px]" onclick="onChartTokenClick(this)" data-type="static_branch" data-palace="${pNum}" data-val="${statBranches}">${statBranches}</span>
-                                ${axisBadge}
-                            </div>
-                            <span class="text-[10px] text-gray-400 font-mono">#${pNum}</span>
+                            <span class="q-token text-red-500 font-bold text-[11px]" onclick="onChartTokenClick(this)" data-type="static_branch" data-palace="${pNum}" data-val="${statBranches}">${statBranches}</span>
+                            ${pNum === 6 ? '<span class="text-[9.5px] font-bold text-blue-700 font-mono bg-blue-50 px-1 rounded border border-blue-200" title="Дворец #6 (Цянь) — Дом Звезды Тянь Синь">#6 心</span>' :
+                              pNum === 2 ? '<span class="text-[9.5px] font-bold text-amber-700 font-mono bg-amber-50 px-1 rounded border border-amber-200" title="Дворец #2 (Кунь) — Дом Звезды Тянь Жуй">#2 芮</span>' :
+                              `<span class="text-[10px] text-gray-400 font-mono">#${pNum}</span>`}
                         </div>
 
                         <!-- Средняя строка: Ствол Неба, Звезда и домашний ствол звезды в скобках -->
                         <div class="flex items-center justify-between py-1">
                             <span class="q-token text-gray-900 font-bold text-sm sm:text-base leading-none" onclick="onChartTokenClick(this)" data-type="outer_stem" data-palace="${pNum}" data-val="${pal.outer_stem}">${pal.outer_stem || '&nbsp;'}</span>
                             <div class="flex items-center gap-0.5 leading-none">
-                                <span class="q-token text-blue-700 font-bold text-xs sm:text-sm" onclick="onChartTokenClick(this)" data-type="star" data-palace="${pNum}" data-val="${pal.star}">${pal.star || ''}</span>
+                                <div class="flex items-center">
+                                    <span class="q-token text-blue-700 font-bold text-xs sm:text-sm" onclick="onChartTokenClick(this)" data-type="star" data-palace="${pNum}" data-val="${pal.star}">${pal.star || ''}</span>
+                                    ${(pal.star === '心' && pNum !== 6) ? '<span class="text-[9px] px-1 rounded bg-blue-100 text-blue-800 font-bold ml-0.5" title="Звезда Тянь Синь в Дв. #' + pNum + '">⭐心</span>' : ''}
+                                    ${(pal.star === '芮' && pNum !== 2) ? '<span class="text-[9px] px-1 rounded bg-amber-100 text-amber-800 font-bold ml-0.5" title="Звезда Тянь Жуй в Дв. #' + pNum + '">⭐芮</span>' : ''}
+                                </div>
                                 ${pal.star_home_stem ? `<span class="q-token text-emerald-700 font-bold text-[11px]" onclick="onChartTokenClick(this)" data-type="star_home_stem" data-palace="${pNum}" data-val="${pal.star_home_stem}">(${pal.star_home_stem})</span>` : ''}
                             </div>
                         </div>
@@ -1421,62 +1639,93 @@
             container.innerHTML = html;
         }
 
-        function renderPersistentPillars(currentChart, axesInfo) {
+        function renderPersistentPillars(currentChart) {
             const btnYear = document.getElementById('btnPersistentYear');
-            const textYear = document.getElementById('textPersistentYear');
+            const textGzYear = document.getElementById('textPersistentYearGz');
+            const textMergeYear = document.getElementById('textPersistentYearMerge');
+            const badgeYear = document.getElementById('badgePersistentYear');
+
             const btnMonth = document.getElementById('btnPersistentMonth');
-            const textMonth = document.getElementById('textPersistentMonth');
+            const textGzMonth = document.getElementById('textPersistentMonthGz');
+            const textMergeMonth = document.getElementById('textPersistentMonthMerge');
+            const badgeMonth = document.getElementById('badgePersistentMonth');
+
             if (!btnYear || !btnMonth) return;
 
+            // 1. Year Pillar
             const gzYear = currentChart.pillars.gzYear;
-            const mergeYear = getMergePillar(gzYear);
-            const matchYear = analyzePillarForAxes(mergeYear[0], mergeYear[1], axesInfo, currentChart.palaceByNum, currentChart.pDyn);
-            const hasYearHit = matchYear.assembled.length > 0 || matchYear.split.length > 0;
+            const stemYear = gzYear[0];
+            const branchYear = gzYear[1];
+            const mergeStemYear = STEM_MERGE[stemYear] || stemYear;
+            const mergeBranchYear = BRANCH_MERGE[branchYear] || branchYear;
+            const mergeYear = mergeStemYear + mergeBranchYear;
 
-            textYear.innerHTML = `${gzYear} ➔ <b class="font-mono">${mergeYear}</b> ${hasYearHit ? (matchYear.assembled.length > 0 ? '🟢' : '🔴') : '<span class="text-gray-400 font-normal">(вне осей)</span>'}`;
+            const matchYear = analyzePillarGlobalMerge(stemYear, branchYear, currentChart.palaceByNum, currentChart.pDyn, 'year');
+            const hasYearHit = matchYear.allMatches.length > 0;
+
+            if (textGzYear) textGzYear.textContent = gzYear;
+            if (textMergeYear) textMergeYear.textContent = mergeYear;
+            if (badgeYear) badgeYear.innerHTML = formatStatusBadge(matchYear);
+
             if (hasYearHit) {
-                btnYear.className = "px-2.5 py-1 rounded-lg border border-amber-400 bg-amber-100 text-amber-950 font-bold transition cursor-pointer text-xs flex items-center gap-1 shadow-xs hover:bg-amber-200";
+                btnYear.className = "p-2 sm:p-2.5 rounded-lg border transition cursor-pointer flex items-center justify-between shadow-xs select-none bg-amber-50 hover:bg-amber-100/80 border-amber-300";
             } else {
-                btnYear.className = "px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-100/70 text-gray-400 font-medium transition cursor-default text-xs flex items-center gap-1 opacity-70";
+                btnYear.className = "p-2 sm:p-2.5 rounded-lg border transition cursor-pointer flex items-center justify-between shadow-2xs select-none bg-white hover:bg-gray-50 border-gray-200 text-gray-400";
             }
 
+            // 2. Month Pillar
             const gzMonth = currentChart.pillars.gzMonth;
-            const mergeMonth = getMergePillar(gzMonth);
-            const matchMonth = analyzePillarForAxes(mergeMonth[0], mergeMonth[1], axesInfo, currentChart.palaceByNum, currentChart.pDyn);
-            const hasMonthHit = matchMonth.assembled.length > 0 || matchMonth.split.length > 0;
+            const stemMonth = gzMonth[0];
+            const branchMonth = gzMonth[1];
+            const mergeStemMonth = STEM_MERGE[stemMonth] || stemMonth;
+            const mergeBranchMonth = BRANCH_MERGE[branchMonth] || branchMonth;
+            const mergeMonth = mergeStemMonth + mergeBranchMonth;
 
-            textMonth.innerHTML = `${gzMonth} ➔ <b class="font-mono">${mergeMonth}</b> ${hasMonthHit ? (matchMonth.assembled.length > 0 ? '🟢' : '🔴') : '<span class="text-gray-400 font-normal">(вне осей)</span>'}`;
+            const matchMonth = analyzePillarGlobalMerge(stemMonth, branchMonth, currentChart.palaceByNum, currentChart.pDyn, 'month');
+            const hasMonthHit = matchMonth.allMatches.length > 0;
+
+            if (textGzMonth) textGzMonth.textContent = gzMonth;
+            if (textMergeMonth) textMergeMonth.textContent = mergeMonth;
+            if (badgeMonth) badgeMonth.innerHTML = formatStatusBadge(matchMonth);
+
             if (hasMonthHit) {
-                btnMonth.className = "px-2.5 py-1 rounded-lg border border-purple-400 bg-purple-100 text-purple-950 font-bold transition cursor-pointer text-xs flex items-center gap-1 shadow-xs hover:bg-purple-200";
+                btnMonth.className = "p-2 sm:p-2.5 rounded-lg border transition cursor-pointer flex items-center justify-between shadow-xs select-none bg-purple-50 hover:bg-purple-100/80 border-purple-300";
             } else {
-                btnMonth.className = "px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-100/70 text-gray-400 font-medium transition cursor-default text-xs flex items-center gap-1 opacity-70";
+                btnMonth.className = "p-2 sm:p-2.5 rounded-lg border transition cursor-pointer flex items-center justify-between shadow-2xs select-none bg-white hover:bg-gray-50 border-gray-200 text-gray-400";
             }
         }
 
         function selectPersistentPillar(type) {
             if (!currentChart) return;
-            const axesInfo = calcTargetAxes(currentChart);
+            document.querySelectorAll('.analyzer-item-active').forEach(c => c.classList.remove('analyzer-item-active'));
 
             if (type === 'year') {
                 const gzYear = currentChart.pillars.gzYear;
                 const mergeYear = getMergePillar(gzYear);
-                const matchYear = analyzePillarForAxes(mergeYear[0], mergeYear[1], axesInfo, currentChart.palaceByNum, currentChart.pDyn);
+                const matchYear = analyzePillarGlobalMerge(gzYear[0], gzYear[1], currentChart.palaceByNum, currentChart.pDyn, 'year');
                 highlightPillarInChart(mergeYear, matchYear, `🌟 Постоянный Год: ${gzYear} ➔ ${mergeYear}`, 'year');
             } else if (type === 'month') {
                 const gzMonth = currentChart.pillars.gzMonth;
                 const mergeMonth = getMergePillar(gzMonth);
-                const matchMonth = analyzePillarForAxes(mergeMonth[0], mergeMonth[1], axesInfo, currentChart.palaceByNum, currentChart.pDyn);
+                const matchMonth = analyzePillarGlobalMerge(gzMonth[0], gzMonth[1], currentChart.palaceByNum, currentChart.pDyn, 'month');
                 highlightPillarInChart(mergeMonth, matchMonth, `🔮 Постоянный Месяц: ${gzMonth} ➔ ${mergeMonth}`, 'month');
             }
         }
 
-        function renderDaysAssistant(currentChart, axesInfo) {
+        function renderDaysAssistant(currentChart) {
             const container = document.getElementById('daysListContainer');
             if (!container) return;
 
             const baseYear = currentChart.inputDate.year;
             const baseMonth = currentChart.inputDate.month;
             const baseDay = currentChart.inputDate.day;
+
+            // Days in current month
+            const daysInMonth = new Date(Date.UTC(baseYear, baseMonth, 0)).getUTCDate();
+            const daysLeftInMonth = Math.max(10, daysInMonth - baseDay + 1);
+            if (!currentDaysCount || currentDaysCount < daysLeftInMonth) {
+                currentDaysCount = daysLeftInMonth;
+            }
 
             let html = '';
 
@@ -1486,50 +1735,26 @@
                 const m = dt.getUTCMonth() + 1;
                 const d = dt.getUTCDate();
 
-                // Check Solar Term (Zhong Qi) boundary
-                if (d === ZHONG_QI_DAYS[m]) {
-                    const nextLg = ZHONG_QI_LG[m];
-                    html += `
-                        <div class="my-2 p-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 font-bold text-xs flex items-center justify-between shadow-xs">
-                            <span class="flex items-center gap-1.5"><i class="fa fa-refresh text-amber-600"></i> ⚡ Смена Лунного Генерала: ${nextLg.n} (${nextLg.b})</span>
-                            <span class="text-[11px] text-amber-700 font-mono">${String(d).padStart(2,'0')}.${String(m).padStart(2,'0')} (переход осей)</span>
-                        </div>
-                    `;
-                }
-
                 const dayOffset = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(1900, 0, 31)) / 86400000);
                 const dayGzIdx = (dayOffset + 40) % 60;
                 const gzDay = STEMS[dayGzIdx % 10] + BRANCHES[dayGzIdx % 12];
                 const gzMerge = getMergePillar(gzDay);
 
-                const match = analyzePillarForAxes(gzMerge[0], gzMerge[1], axesInfo, currentChart.palaceByNum, currentChart.pDyn);
-                const hasAss = match.assembled.length > 0;
-                const hasSpl = match.split.length > 0;
+                const match = analyzePillarGlobalMerge(gzDay[0], gzDay[1], currentChart.palaceByNum, currentChart.pDyn, 'day');
+                const hasHits = match.allMatches.length > 0;
+                const statusBadge = formatStatusBadge(match);
 
-                const hasMonth = match.assembled.some(m => m.isMonth) || match.split.some(m => m.isMonth);
-                const hasYear = match.assembled.some(m => m.isYear) || match.split.some(m => m.isYear);
-                let sourceBadge = '';
-                if (hasMonth && hasYear) {
-                    sourceBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-purple-100 to-amber-100 text-amber-950 border border-amber-300 ml-1">⚡М+Г</span>`;
-                } else if (hasMonth) {
-                    sourceBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 ml-1">🌙М</span>`;
-                } else if (hasYear) {
-                    sourceBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 ml-1">🌟Г</span>`;
-                }
-
-                let statusBadge = '';
                 let statusBg = 'bg-white hover:bg-gray-50 border-gray-200';
-                if (hasAss && hasSpl) {
-                    statusBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">🟢 ${match.assembled.length}</span> <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 ml-1">🔴 ${match.split.length}</span>${sourceBadge}`;
-                    statusBg = 'bg-emerald-50/40 hover:bg-emerald-50 border-emerald-300';
-                } else if (hasAss) {
-                    statusBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">🟢 Собран (${match.assembled.length})</span>${sourceBadge}`;
-                    statusBg = 'bg-emerald-50/50 hover:bg-emerald-50 border-emerald-300';
-                } else if (hasSpl) {
-                    statusBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800">🔴 Расколот (${match.split.length})</span>${sourceBadge}`;
-                    statusBg = 'bg-rose-50/50 hover:bg-rose-50 border-rose-300';
-                } else {
-                    statusBadge = `<span class="text-gray-400 text-xs">—</span>`;
+                if (hasHits) {
+                    const hasGreen = (match.assembledBottom && match.assembledBottom.length > 0) ||
+                                     (match.splitBottom && match.splitBottom.length > 0) ||
+                                     (match.assembledPerim && match.assembledPerim.length > 0);
+                    const hasRed = (match.splitTop && match.splitTop.length > 0) ||
+                                   (match.assembledTop && match.assembledTop.length > 0) ||
+                                   (match.splitPerim && match.splitPerim.length > 0);
+                    if (hasGreen && hasRed) statusBg = 'bg-amber-50/30 hover:bg-amber-50/50 border-amber-300';
+                    else if (hasGreen) statusBg = 'bg-emerald-50/30 hover:bg-emerald-50/50 border-emerald-300';
+                    else statusBg = 'bg-rose-50/30 hover:bg-rose-50/50 border-rose-300';
                 }
 
                 const dateFmt = `${String(d).padStart(2,'0')}.${String(m).padStart(2,'0')}`;
@@ -1546,7 +1771,7 @@
                             <span class="text-sm font-bold text-indigo-700 font-mono">${gzMerge}</span>
                             ${isCurrentDay ? '<span class="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-800 font-semibold">Сегодня</span>' : ''}
                         </div>
-                        <div>
+                        <div class="flex items-center gap-1">
                             ${statusBadge}
                         </div>
                     </div>
@@ -1559,12 +1784,11 @@
         function loadMoreDays() {
             currentDaysCount += 10;
             if (currentChart) {
-                const axesInfo = calcTargetAxes(currentChart);
-                renderDaysAssistant(currentChart, axesInfo);
+                renderDaysAssistant(currentChart);
             }
         }
 
-        function renderHoursAssistant(currentChart, axesInfo) {
+        function renderHoursAssistant(currentChart) {
             const container = document.getElementById('hoursListContainer');
             if (!container) return;
 
@@ -1601,26 +1825,14 @@
                     const hBranch = BRANCHES[hIdx];
                     const gzHour = hStem + hBranch;
                     const gzMerge = getMergePillar(gzHour);
-                    const match = analyzePillarForAxes(gzMerge[0], gzMerge[1], axesInfo, currentChart.palaceByNum, currentChart.pDyn);
+                    const match = analyzePillarGlobalMerge(hStem, hBranch, currentChart.palaceByNum, currentChart.pDyn, 'hour');
 
-                    const hasAss = match.assembled.length > 0;
-                    const hasSpl = match.split.length > 0;
-                    if (hasAss || hasSpl) dayHits++;
-
-                    const hasMonth = match.assembled.some(m => m.isMonth) || match.split.some(m => m.isMonth);
-                    const hasYear = match.assembled.some(m => m.isYear) || match.split.some(m => m.isYear);
-                    let srcTag = '';
-                    if (hasMonth && hasYear) srcTag = '<span class="text-[9px] font-bold text-amber-900 ml-0.5" title="Оси: Месяц + Год">⚡</span>';
-                    else if (hasMonth) srcTag = '<span class="text-[9px] font-bold text-purple-700 ml-0.5" title="Ось Месяца">🌙</span>';
-                    else if (hasYear) srcTag = '<span class="text-[9px] font-bold text-amber-700 ml-0.5" title="Ось Года">🌟</span>';
+                    if (match.allMatches.length > 0) dayHits++;
 
                     dayHours.push({
                         timeRange: timeRanges[hIdx],
                         gzHour,
                         gzMerge,
-                        hasAss,
-                        hasSpl,
-                        srcTag,
                         match
                     });
                 }
@@ -1647,19 +1859,19 @@
 
                         <div id="${accordionId}" class="${isFirstDay ? '' : 'hidden'} p-2 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
                             ${dayHours.map(item => {
-                                let badge = '';
+                                const badge = formatStatusBadge(item.match);
+                                const hasHits = item.match.allMatches.length > 0;
                                 let btnBorder = 'border-gray-200 hover:border-gray-300 bg-white';
-                                if (item.hasAss && item.hasSpl) {
-                                    badge = `<span class="text-[10px] font-bold text-emerald-700">🟢</span><span class="text-[10px] font-bold text-rose-700">🔴</span>${item.srcTag}`;
-                                    btnBorder = 'border-emerald-300 bg-emerald-50/30';
-                                } else if (item.hasAss) {
-                                    badge = `<span class="text-[10px] font-bold text-emerald-700">🟢 Собран</span>${item.srcTag}`;
-                                    btnBorder = 'border-emerald-300 bg-emerald-50/40';
-                                } else if (item.hasSpl) {
-                                    badge = `<span class="text-[10px] font-bold text-rose-700">🔴 Раскол</span>${item.srcTag}`;
-                                    btnBorder = 'border-rose-300 bg-rose-50/40';
-                                } else {
-                                    badge = '<span class="text-gray-300 text-xs">—</span>';
+                                if (hasHits) {
+                                    const hasGreen = (item.match.assembledBottom && item.match.assembledBottom.length > 0) ||
+                                                     (item.match.splitBottom && item.match.splitBottom.length > 0) ||
+                                                     (item.match.assembledPerim && item.match.assembledPerim.length > 0);
+                                    const hasRed = (item.match.splitTop && item.match.splitTop.length > 0) ||
+                                                   (item.match.assembledTop && item.match.assembledTop.length > 0) ||
+                                                   (item.match.splitPerim && item.match.splitPerim.length > 0);
+                                    if (hasGreen && hasRed) btnBorder = 'border-amber-300 bg-amber-50/30';
+                                    else if (hasGreen) btnBorder = 'border-emerald-300 bg-emerald-50/30';
+                                    else btnBorder = 'border-rose-300 bg-rose-50/30';
                                 }
 
                                 return `
@@ -1686,7 +1898,7 @@
             container.innerHTML = html;
         }
 
-        function renderMinutesAssistant(currentChart, axesInfo) {
+        function renderMinutesAssistant(currentChart) {
             const container = document.getElementById('minutesListContainer');
             if (!container) return;
 
@@ -1746,17 +1958,8 @@
                     const gzMinute = pKe.gzMinute;
                     const gzMerge = getMergePillar(gzMinute);
 
-                    const match = analyzePillarForAxes(gzMerge[0], gzMerge[1], axesInfo, currentChart.palaceByNum, currentChart.pDyn);
-                    const hasAss = match.assembled.length > 0;
-                    const hasSpl = match.split.length > 0;
-                    if (hasAss || hasSpl) dhHits++;
-
-                    const hasMonth = match.assembled.some(m => m.isMonth) || match.split.some(m => m.isMonth);
-                    const hasYear = match.assembled.some(m => m.isYear) || match.split.some(m => m.isYear);
-                    let srcTag = '';
-                    if (hasMonth && hasYear) srcTag = '<span class="text-[9px] font-bold text-amber-900 ml-0.5" title="Оси: Месяц + Год">⚡</span>';
-                    else if (hasMonth) srcTag = '<span class="text-[9px] font-bold text-purple-700 ml-0.5" title="Ось Месяца">🌙</span>';
-                    else if (hasYear) srcTag = '<span class="text-[9px] font-bold text-amber-700 ml-0.5" title="Ось Года">🌟</span>';
+                    const match = analyzePillarGlobalMerge(gzMinute[0], gzMinute[1], currentChart.palaceByNum, currentChart.pDyn, 'minute');
+                    if (match.allMatches.length > 0) dhHits++;
 
                     // Range formatting: 10-minute block boundaries at :x5
                     const startRangeD = new Date(keDate.getTime() - 5 * 60 * 1000);
@@ -1770,9 +1973,6 @@
                         timeRange: rangeStr,
                         gzMinute,
                         gzMerge,
-                        hasAss,
-                        hasSpl,
-                        srcTag,
                         isCurrentKe,
                         match,
                         year: keYear,
@@ -1806,19 +2006,19 @@
 
                         <div id="${accordionId}" class="${isFirstDh ? '' : 'hidden'} p-2 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
                             ${dhMinutes.map(item => {
-                                let badge = '';
+                                const badge = formatStatusBadge(item.match);
+                                const hasHits = item.match.allMatches.length > 0;
                                 let btnBorder = 'border-gray-200 hover:border-gray-300 bg-white';
-                                if (item.hasAss && item.hasSpl) {
-                                    badge = `<span class="text-[10px] font-bold text-emerald-700">🟢</span><span class="text-[10px] font-bold text-rose-700">🔴</span>${item.srcTag}`;
-                                    btnBorder = 'border-emerald-300 bg-emerald-50/30';
-                                } else if (item.hasAss) {
-                                    badge = `<span class="text-[10px] font-bold text-emerald-700">🟢 Собран</span>${item.srcTag}`;
-                                    btnBorder = 'border-emerald-300 bg-emerald-50/40';
-                                } else if (item.hasSpl) {
-                                    badge = `<span class="text-[10px] font-bold text-rose-700">🔴 Раскол</span>${item.srcTag}`;
-                                    btnBorder = 'border-rose-300 bg-rose-50/40';
-                                } else {
-                                    badge = '<span class="text-gray-300 text-xs">—</span>';
+                                if (hasHits) {
+                                    const hasGreen = (item.match.assembledBottom && item.match.assembledBottom.length > 0) ||
+                                                     (item.match.splitBottom && item.match.splitBottom.length > 0) ||
+                                                     (item.match.assembledPerim && item.match.assembledPerim.length > 0);
+                                    const hasRed = (item.match.splitTop && item.match.splitTop.length > 0) ||
+                                                   (item.match.assembledTop && item.match.assembledTop.length > 0) ||
+                                                   (item.match.splitPerim && item.match.splitPerim.length > 0);
+                                    if (hasGreen && hasRed) btnBorder = 'border-amber-300 bg-amber-50/30';
+                                    else if (hasGreen) btnBorder = 'border-emerald-300 bg-emerald-50/30';
+                                    else btnBorder = 'border-rose-300 bg-rose-50/30';
                                 }
 
                                 return `
@@ -1861,167 +2061,218 @@
             }
         }
 
-        function highlightPillarInChart(mergePillar, matchResult, title, type) {
+        function highlightSpecificTokens(palaceNum, role, val, hitClass) {
+            if (!palaceNum || !val) return;
+            const palEl = document.getElementById(`palace-cell-${palaceNum}`);
+
+            if (role === 'inner_stem' && palEl) {
+                const el = palEl.querySelector('[data-type="inner_stem"]');
+                if (el && (el.dataset.val || '').includes(val)) el.classList.add(hitClass);
+            } else if (role === 'outer_stem' && palEl) {
+                const el = palEl.querySelector('[data-type="outer_stem"]');
+                if (el && (el.dataset.val || '').includes(val)) el.classList.add(hitClass);
+            } else if (role === 'door_home_stem' && palEl) {
+                const el = palEl.querySelector('[data-type="door_home_stem"]');
+                if (el && (el.dataset.val || '').includes(val)) el.classList.add(hitClass);
+            } else if (role === 'star_home_stem' && palEl) {
+                const el = palEl.querySelector('[data-type="star_home_stem"]');
+                if (el && (el.dataset.val || '').includes(val)) el.classList.add(hitClass);
+            } else if (role === 'static_branch' && palEl) {
+                const el = palEl.querySelector('[data-type="static_branch"]');
+                if (el && (el.dataset.val || '').includes(val)) el.classList.add(hitClass);
+            } else if (role === 'perim_branch') {
+                const els = document.querySelectorAll(`[data-type="perim_branch"][data-palace="${palaceNum}"]`);
+                els.forEach(el => {
+                    if ((el.dataset.val || '').includes(val)) el.classList.add(hitClass);
+                });
+            } else if (role === 'perim_stem') {
+                const els = document.querySelectorAll(`[data-type="perim_stem"][data-palace="${palaceNum}"]`);
+                els.forEach(el => {
+                    if ((el.dataset.val || '').includes(val)) el.classList.add(hitClass);
+                });
+            }
+        }
+
+        let currentActiveMatchContext = null;
+
+        function highlightPillarInChart(mergePillar, matchResult, title, type, minuteParams) {
             resetAnalyzerHighlight();
+
+            const banner = document.getElementById('analyzerSelectedMatchBanner');
+            if (!banner) return;
+            banner.classList.remove('hidden');
+
+            const allIndices = new Set();
+            (matchResult.allMatches || []).forEach((m, idx) => allIndices.add(idx));
+
+            currentActiveMatchContext = {
+                mergePillar,
+                matchResult,
+                title,
+                type,
+                minuteParams: minuteParams || null,
+                activeIndices: allIndices
+            };
+
+            renderBannerAndChartHighlights();
+        }
+
+        function renderBannerAndChartHighlights() {
+            if (!currentActiveMatchContext) return;
 
             const banner = document.getElementById('analyzerSelectedMatchBanner');
             const titleEl = document.getElementById('matchBannerTitle');
             const detailsEl = document.getElementById('matchBannerDetails');
-
             if (!banner || !titleEl || !detailsEl) return;
-            banner.classList.remove('hidden');
 
-            const hasAssembled = matchResult.assembled.length > 0;
-            const hasSplit = matchResult.split.length > 0;
+            const { mergePillar, matchResult, title, minuteParams, activeIndices } = currentActiveMatchContext;
+            const allMatches = matchResult.allMatches || [];
 
-            let badgeHtml = '';
-            if (hasAssembled && hasSplit) {
-                badgeHtml = '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px] font-bold">🟢 Собран</span> <span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[11px] font-bold ml-1">🔴 Расколот</span>';
-            } else if (hasAssembled) {
-                badgeHtml = `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px] font-bold">🟢 СОБРАН (${matchResult.assembled.length})</span>`;
-            } else if (hasSplit) {
-                badgeHtml = `<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[11px] font-bold">🔴 РАСКОЛОТ (${matchResult.split.length})</span>`;
-            } else {
-                badgeHtml = '<span class="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[11px] font-bold">⚪ Вне целевых осей</span>';
+            // Title with badges and quick toggle buttons
+            const badgeHtml = formatStatusBadge(matchResult);
+            const totalCount = allMatches.length;
+
+            let filterControlsHtml = '';
+            if (totalCount > 1) {
+                filterControlsHtml = `
+                    <div class="flex items-center gap-1.5 text-[10px]">
+                        <button type="button" onclick="setAllMatchLines(true)" class="px-2 py-0.5 rounded border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-semibold cursor-pointer shadow-2xs">
+                            Все (${totalCount})
+                        </button>
+                        <button type="button" onclick="setAllMatchLines(false)" class="px-2 py-0.5 rounded border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-semibold cursor-pointer shadow-2xs">
+                            Снять все
+                        </button>
+                    </div>
+                `;
             }
 
-            titleEl.innerHTML = `<span>${title}</span> <div>${badgeHtml}</div>`;
+            titleEl.innerHTML = `
+                <div class="flex flex-wrap items-center justify-between gap-2 w-full">
+                    <span class="text-sm font-bold text-gray-900">${title}</span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        ${filterControlsHtml}
+                        <div class="flex items-center gap-1">${badgeHtml}</div>
+                    </div>
+                </div>
+            `;
 
+            // Clear previous highlight on tokens and palace cells
+            document.querySelectorAll('.q-token-hit-assembled, .q-token-hit-split, .q-token-hit-hollow-green, .q-token-hit-hollow-red').forEach(el => {
+                el.classList.remove('q-token-hit-assembled', 'q-token-hit-split', 'q-token-hit-hollow-green', 'q-token-hit-hollow-red');
+            });
+            document.querySelectorAll('.palace-cell-assembled, .palace-cell-split, .palace-cell-both').forEach(el => {
+                el.classList.remove('palace-cell-assembled', 'palace-cell-split', 'palace-cell-both');
+            });
+
+            const assembledPalaces = new Set();
+            const splitPalaces = new Set();
             let detailLines = [];
 
-            function getAxisBadge(m) {
-                if (m.sourceType === 'both') {
-                    return `<span class="text-[9px] px-1 py-0.2 rounded bg-gradient-to-r from-purple-100 to-amber-100 text-amber-950 font-bold border border-amber-300 shadow-2xs">⚡М+Г</span>`;
-                } else if (m.sourceType === 'year') {
-                    return `<span class="text-[9px] px-1 py-0.2 rounded bg-amber-50 text-amber-800 font-bold border border-amber-200">🌟Год</span>`;
-                } else {
-                    return `<span class="text-[9px] px-1 py-0.2 rounded bg-purple-50 text-purple-700 font-bold border border-purple-200">🌙Месяц</span>`;
+            if (allMatches.length === 0) {
+                detailLines.push(`<div class="text-gray-500 italic py-1">Сливающийся столп ${mergePillar} не имеет резонансных совпадений.</div>`);
+            } else {
+                allMatches.forEach((m, idx) => {
+                    const isSelected = activeIndices.has(idx);
+
+                    if (isSelected) {
+                        for (const p of m.palaces) {
+                            if (m.palaceType === 'assembled') assembledPalaces.add(p);
+                            else if (m.palaceType === 'split') splitPalaces.add(p);
+                        }
+                        for (const tok of m.tokens) {
+                            highlightSpecificTokens(tok.palace, tok.role, tok.val, tok.hitClass);
+                        }
+                    }
+
+                    // Card styling for active vs inactive
+                    let lineCardClass = '';
+                    let checkIcon = '';
+                    if (isSelected) {
+                        lineCardClass = 'bg-white border-gray-300 shadow-2xs text-gray-900 hover:border-gray-400';
+                        checkIcon = '<span class="text-indigo-600 font-bold text-xs"><i class="fa fa-check-square"></i></span>';
+                    } else {
+                        lineCardClass = 'bg-gray-100/60 border-dashed border-gray-200 text-gray-400 opacity-60 hover:opacity-80 hover:bg-gray-100';
+                        checkIcon = '<span class="text-gray-300 text-xs"><i class="fa fa-square-o"></i></span>';
+                    }
+
+                    detailLines.push(`
+                        <div class="p-1.5 rounded-lg border transition cursor-pointer select-none flex items-start gap-2 ${lineCardClass}"
+                             onclick="toggleMatchLine(${idx})"
+                             title="${isSelected ? 'Нажмите, чтобы скрыть показ этого расположения на карте' : 'Нажмите, чтобы выделить показ этого расположения на карте'}">
+                            <div class="mt-0.5 flex-shrink-0">${checkIcon}</div>
+                            <div class="flex-shrink-0 mt-0.5">${m.iconHtml}</div>
+                            <div class="text-[11.5px] leading-snug flex-1">
+                                <div>${m.text}</div>
+                                ${m.starBadgesHtml ? `<div class="mt-1 flex items-center gap-1">${m.starBadgesHtml}</div>` : ''}
+                            </div>
+                        </div>
+                    `);
+                });
+            }
+
+            // Apply palace highlights for currently active lines
+            for (let p = 1; p <= 9; p++) {
+                if (p === 5) continue;
+                const palEl = document.getElementById(`palace-cell-${p}`);
+                if (!palEl) continue;
+
+                const isAss = assembledPalaces.has(p);
+                const isSpl = splitPalaces.has(p);
+
+                if (isAss && isSpl) {
+                    palEl.classList.add('palace-cell-both');
+                } else if (isAss) {
+                    palEl.classList.add('palace-cell-assembled');
+                } else if (isSpl) {
+                    palEl.classList.add('palace-cell-split');
                 }
             }
 
-            // 1. Process Assembled
-            for (const m of matchResult.assembled) {
+            // Minute button if applicable
+            if (minuteParams) {
+                const { y, mo, d, h, mi, gzMinute } = minuteParams;
                 detailLines.push(`
-                    <div class="flex items-start gap-1 text-emerald-900">
-                        <span class="font-bold flex items-center gap-1">🟢 Ось ${m.axis} ${getAxisBadge(m)}:</span>
-                        <span>Собран во <b>Дворце #${m.palace}</b> [${m.stemLocs.join(', ')} <b>${m.stem}</b> + ${m.branchLocs.join(', ')} <b>${m.branch}</b>]</span>
+                    <div class="mt-2 pt-2 border-t border-gray-200/80 flex items-center justify-between">
+                        <span class="text-[11px] text-gray-600 font-medium">Открыть минутный расклад (刻盘) на это время:</span>
+                        <button type="button" onclick="loadMinuteChart(${y}, ${mo}, ${d}, ${h}, ${mi})"
+                                class="px-2.5 py-1 bg-red-800 hover:bg-red-700 text-white rounded-md text-xs font-bold shadow-xs transition flex items-center gap-1 cursor-pointer">
+                            <i class="fa fa-calculator"></i> Рассчитать 刻盘 (${gzMinute})
+                        </button>
                     </div>
                 `);
-
-                const palEl = document.getElementById(`palace-cell-${m.palace}`);
-                if (palEl) palEl.classList.add('palace-cell-assembled');
-
-                highlightTokensInPalace(m.palace, m.stem, m.branch, m.stemLocs, m.branchLocs, type || 'assembled');
-            }
-
-            // 2. Process Split
-            for (const m of matchResult.split) {
-                detailLines.push(`
-                    <div class="flex items-start gap-1 text-rose-900">
-                        <span class="font-bold flex items-center gap-1">🔴 Ось ${m.axis} ${getAxisBadge(m)}:</span>
-                        <span>Раскол: Ствол во <b>Дв. #${m.stemPalace}</b> [${m.stemLocs.join(', ')} <b>${m.stem}</b>] ↔ Ветвь во <b>Дв. #${m.branchPalace}</b> [${m.branchLocs.join(', ')} <b>${m.branch}</b>]</span>
-                    </div>
-                `);
-
-                const palStemEl = document.getElementById(`palace-cell-${m.stemPalace}`);
-                if (palStemEl) palStemEl.classList.add('palace-cell-split');
-
-                const palBranchEl = document.getElementById(`palace-cell-${m.branchPalace}`);
-                if (palBranchEl) palBranchEl.classList.add('palace-cell-split');
-
-                highlightTokensForSplit(m.stemPalace, m.branchPalace, m.stem, m.branch, m.stemLocs, m.branchLocs, type || 'split');
-            }
-
-            if (detailLines.length === 0) {
-                detailLines.push(`<div class="text-gray-500 italic">Сливающийся столп ${mergePillar} не имеет совпадений на активных целевых осях.</div>`);
             }
 
             detailsEl.innerHTML = detailLines.join('');
         }
 
-        function highlightTokensInPalace(palNum, stem, branch, stemLocs, branchLocs, hitType) {
-            const hitClass = hitType === 'year' ? 'q-token-hit-year' : (hitType === 'month' ? 'q-token-hit-month' : (hitType === 'split' ? 'q-token-hit-split' : 'q-token-hit-assembled'));
-
-            const palEl = document.getElementById(`palace-cell-${palNum}`);
-            if (palEl) {
-                palEl.querySelectorAll('.q-token').forEach(tok => {
-                    const val = tok.dataset.val || '';
-                    if (val.includes(stem)) {
-                        tok.classList.add(hitClass);
-                    }
-                });
-                if (branchLocs.includes('Статика')) {
-                    const statTok = palEl.querySelector('[data-type="static_branch"]');
-                    if (statTok && statTok.dataset.val.includes(branch)) {
-                        statTok.classList.add(hitClass);
-                    }
-                }
+        function toggleMatchLine(idx) {
+            if (!currentActiveMatchContext) return;
+            const { activeIndices } = currentActiveMatchContext;
+            if (activeIndices.has(idx)) {
+                activeIndices.delete(idx);
+            } else {
+                activeIndices.add(idx);
             }
-
-            if (branchLocs.includes('Периметр')) {
-                const perimToks = document.querySelectorAll(`[data-type="perim_branch"][data-palace="${palNum}"]`);
-                perimToks.forEach(tok => {
-                    if (tok.dataset.val === branch) {
-                        tok.classList.add(hitClass);
-                    }
-                });
-            }
-
-            if (stemLocs.includes('Внешний ствол')) {
-                const perimStemToks = document.querySelectorAll(`[data-type="perim_stem"][data-palace="${palNum}"]`);
-                perimStemToks.forEach(tok => {
-                    if ((tok.dataset.val || '').includes(stem)) {
-                        tok.classList.add(hitClass);
-                    }
-                });
-            }
+            renderBannerAndChartHighlights();
         }
 
-        function highlightTokensForSplit(stemPalNum, branchPalNum, stem, branch, stemLocs, branchLocs, hitType) {
-            const hitClass = hitType === 'year' ? 'q-token-hit-year' : (hitType === 'month' ? 'q-token-hit-month' : 'q-token-hit-split');
-
-            const palStemEl = document.getElementById(`palace-cell-${stemPalNum}`);
-            if (palStemEl) {
-                palStemEl.querySelectorAll('.q-token').forEach(tok => {
-                    if ((tok.dataset.val || '').includes(stem)) {
-                        tok.classList.add(hitClass);
-                    }
-                });
+        function setAllMatchLines(enableAll) {
+            if (!currentActiveMatchContext) return;
+            const { matchResult, activeIndices } = currentActiveMatchContext;
+            activeIndices.clear();
+            if (enableAll) {
+                (matchResult.allMatches || []).forEach((m, idx) => activeIndices.add(idx));
             }
-
-            if (stemLocs.includes('Внешний ствол')) {
-                const perimStemToks = document.querySelectorAll(`[data-type="perim_stem"][data-palace="${stemPalNum}"]`);
-                perimStemToks.forEach(tok => {
-                    if ((tok.dataset.val || '').includes(stem)) {
-                        tok.classList.add(hitClass);
-                    }
-                });
-            }
-
-            const palBranchEl = document.getElementById(`palace-cell-${branchPalNum}`);
-            if (palBranchEl && branchLocs.includes('Статика')) {
-                const statTok = palBranchEl.querySelector('[data-type="static_branch"]');
-                if (statTok && statTok.dataset.val.includes(branch)) {
-                    statTok.classList.add(hitClass);
-                }
-            }
-
-            if (branchLocs.includes('Периметр')) {
-                const perimToks = document.querySelectorAll(`[data-type="perim_branch"][data-palace="${branchPalNum}"]`);
-                perimToks.forEach(tok => {
-                    if (tok.dataset.val === branch) {
-                        tok.classList.add(hitClass);
-                    }
-                });
-            }
+            renderBannerAndChartHighlights();
         }
 
         function resetAnalyzerHighlight() {
-            document.querySelectorAll('.q-token-hit-assembled, .q-token-hit-split, .q-token-hit-year, .q-token-hit-month').forEach(el => {
-                el.classList.remove('q-token-hit-assembled', 'q-token-hit-split', 'q-token-hit-year', 'q-token-hit-month');
+            currentActiveMatchContext = null;
+            document.querySelectorAll('.q-token-hit-assembled, .q-token-hit-split, .q-token-hit-hollow-green, .q-token-hit-hollow-red, .q-token-hit-year, .q-token-hit-month').forEach(el => {
+                el.classList.remove('q-token-hit-assembled', 'q-token-hit-split', 'q-token-hit-hollow-green', 'q-token-hit-hollow-red', 'q-token-hit-year', 'q-token-hit-month');
             });
-            document.querySelectorAll('.palace-cell-assembled, .palace-cell-split').forEach(el => {
-                el.classList.remove('palace-cell-assembled', 'palace-cell-split');
+            document.querySelectorAll('.palace-cell-assembled, .palace-cell-split, .palace-cell-both').forEach(el => {
+                el.classList.remove('palace-cell-assembled', 'palace-cell-split', 'palace-cell-both');
             });
             document.querySelectorAll('.analyzer-item-active').forEach(el => {
                 el.classList.remove('analyzer-item-active');
@@ -2094,49 +2345,31 @@
             document.querySelectorAll('.analyzer-item-active').forEach(c => c.classList.remove('analyzer-item-active'));
             card.classList.add('analyzer-item-active');
 
-            const axesInfo = calcTargetAxes(currentChart);
-            const match = analyzePillarForAxes(gzMerge[0], gzMerge[1], axesInfo, currentChart.palaceByNum, currentChart.pDyn);
+            const match = analyzePillarGlobalMerge(gzDay[0], gzDay[1], currentChart.palaceByNum, currentChart.pDyn, 'day');
 
             const dt = new Date(Date.UTC(currentChart.inputDate.year, currentChart.inputDate.month - 1, currentChart.inputDate.day + offset));
             const dateStr = `${String(dt.getUTCDate()).padStart(2,'0')}.${String(dt.getUTCMonth()+1).padStart(2,'0')}.${dt.getUTCFullYear()}`;
 
-            highlightPillarInChart(gzMerge, match, `📅 День ${dateStr}: ${gzDay} ➔ ${gzMerge}`);
+            highlightPillarInChart(gzMerge, match, `📅 День ${dateStr}: ${gzDay} ➔ ${gzMerge}`, 'day');
         }
 
         function onHourCardClick(btn, gzHour, gzMerge, timeRange) {
             document.querySelectorAll('.analyzer-item-active').forEach(c => c.classList.remove('analyzer-item-active'));
             btn.classList.add('analyzer-item-active');
 
-            const axesInfo = calcTargetAxes(currentChart);
-            const match = analyzePillarForAxes(gzMerge[0], gzMerge[1], axesInfo, currentChart.palaceByNum, currentChart.pDyn);
+            const match = analyzePillarGlobalMerge(gzHour[0], gzHour[1], currentChart.palaceByNum, currentChart.pDyn, 'hour');
 
-            highlightPillarInChart(gzMerge, match, `⏰ Час ${timeRange}: ${gzHour} ➔ ${gzMerge}`);
+            highlightPillarInChart(gzMerge, match, `⏰ Час ${timeRange}: ${gzHour} ➔ ${gzMerge}`, 'hour');
         }
 
         function onMinuteCardClick(btn, gzMinute, gzMerge, timeRange, y, mo, d, h, mi) {
             document.querySelectorAll('.analyzer-item-active').forEach(c => c.classList.remove('analyzer-item-active'));
             btn.classList.add('analyzer-item-active');
 
-            const axesInfo = calcTargetAxes(currentChart);
-            const match = analyzePillarForAxes(gzMerge[0], gzMerge[1], axesInfo, currentChart.palaceByNum, currentChart.pDyn);
+            const match = analyzePillarGlobalMerge(gzMinute[0], gzMinute[1], currentChart.palaceByNum, currentChart.pDyn, 'minute');
 
-            highlightPillarInChart(gzMerge, match, `⏱️ Минута ${timeRange}: ${gzMinute} ➔ ${gzMerge}`);
-
-            const detailsEl = document.getElementById('matchBannerDetails');
-            if (detailsEl) {
-                const btnHtml = `
-                    <div class="mt-2 pt-2 border-t border-gray-200/80 flex items-center justify-between">
-                        <span class="text-[11px] text-gray-600 font-medium">Открыть минутный расклад (刻盘) на это время:</span>
-                        <button type="button" onclick="loadMinuteChart(${y}, ${mo}, ${d}, ${h}, ${mi})"
-                                class="px-2.5 py-1 bg-red-800 hover:bg-red-700 text-white rounded-md text-xs font-bold shadow-xs transition flex items-center gap-1 cursor-pointer">
-                            <i class="fa fa-calculator"></i> Рассчитать 刻盘 (${gzMinute})
-                        </button>
-                    </div>
-                `;
-                detailsEl.insertAdjacentHTML('beforeend', btnHtml);
-            }
+            highlightPillarInChart(gzMerge, match, `⏱️ Минута ${timeRange}: ${gzMinute} ➔ ${gzMerge}`, 'minute', { y, mo, d, h, mi, gzMinute });
         }
-
         function loadMinuteChart(y, mo, d, h, mi) {
             document.getElementById('inpYear').value = y;
             document.getElementById('inpMonth').value = mo;
@@ -2186,6 +2419,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             initDropdowns();
             setCurrentTime();
+            setStyleMode('rich');
         });
     </script>
 </body>
