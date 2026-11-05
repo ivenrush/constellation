@@ -17,27 +17,37 @@
             -webkit-tap-highlight-color: transparent;
         }
         #pan-result {
-            font-family: 'SimSun', 'Noto Serif SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'STSong', serif;
-            font-size: 15px;
-            line-height: 1.5;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Serif SC', 'SimSun', 'PingFang SC', monospace;
+            font-size: 14px;
+            line-height: 1.45;
             white-space: pre;
             overflow-x: auto;
             text-align: left;
-            letter-spacing: 0.05em;
+            letter-spacing: 0;
             word-spacing: 0;
-            width: 100%;
+            width: fit-content;
+            max-width: 100%;
+            margin: 0 auto;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             font-variant-east-asian: full-width;
             background: #ffffff;
-            padding: 1rem;
+            padding: 0.75rem;
             border-radius: 0.5rem;
+            box-sizing: border-box;
         }
         @media (max-width: 640px) {
             #pan-result {
-                font-size: 11px;
-                line-height: 1.35;
-                padding: 0.5rem;
+                font-size: 10.5px;
+                line-height: 1.32;
+                padding: 0.4rem;
+            }
+        }
+        @media (max-width: 440px) {
+            #pan-result {
+                font-size: 9.8px;
+                line-height: 1.28;
+                padding: 0.3rem;
             }
         }
         .bg-gradient-header {
@@ -149,19 +159,19 @@
         }
         .interactive-grid {
             display: grid;
-            grid-template-columns: 46px 1fr 1fr 1fr 46px;
-            grid-template-rows: 46px 1fr 1fr 1fr 46px;
+            grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 44px;
             gap: 2px;
             background-color: #cbd5e1;
             border: 2px solid #94a3b8;
             border-radius: 8px;
-            overflow: hidden;
+            box-sizing: border-box;
+            width: 100%;
         }
         @media (max-width: 440px) {
             .interactive-grid {
-                grid-template-columns: 38px 1fr 1fr 1fr 38px;
-                grid-template-rows: 38px 1fr 1fr 1fr 38px;
+                grid-template-columns: 36px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 36px;
                 gap: 1px;
+                border-width: 1.5px;
             }
         }
         .chinese-font {
@@ -189,7 +199,7 @@
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-3 sm:px-4 mt-4">
+    <main class="max-w-4xl mx-auto px-1.5 sm:px-4 mt-2 sm:mt-4">
         
         <!-- Панель ввода времени и параметров -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 mb-4">
@@ -260,10 +270,10 @@
         </div>
 
         <!-- Контейнер расклада -->
-        <div id="chartOutputCard" class="bg-white rounded-xl shadow-lg border border-gray-200 p-3 sm:p-5">
+        <div id="chartOutputCard" class="bg-white rounded-xl shadow-lg border border-gray-200 p-2 sm:p-5">
             
             <!-- ОРИГИНАЛЬНЫЙ ВИД -->
-            <div id="viewOriginal" class="w-full flex justify-center overflow-x-auto hidden">
+            <div id="viewOriginal" class="w-full overflow-x-auto text-center hidden p-1">
                 <div id="pan-result">
                     <p class="text-gray-400 italic text-center py-10">Загрузка расклада...</p>
                 </div>
@@ -328,15 +338,15 @@
                 </div>
 
                 <!-- 2. Текстовый интерактивный расклад (3x3 + Периметр) -->
-                <div class="bg-white border border-gray-200 rounded-xl p-2 sm:p-4 shadow-sm overflow-x-auto">
+                <div class="bg-white border border-gray-200 rounded-xl p-1.5 sm:p-4 shadow-sm">
                     <!-- Заголовок и пояснение активного совпадения -->
-                    <div id="analyzerSelectedMatchBanner" class="mb-3 p-2.5 rounded-lg bg-gray-50 border border-gray-200 text-xs hidden">
+                    <div id="analyzerSelectedMatchBanner" class="mb-2.5 p-2 sm:p-2.5 rounded-lg bg-gray-50 border border-gray-200 text-xs hidden">
                         <div class="flex items-center justify-between font-bold" id="matchBannerTitle">--</div>
                         <div class="text-[11px] text-gray-700 mt-1 space-y-0.5" id="matchBannerDetails"></div>
                     </div>
 
                     <!-- Интерактивная сетка расклада с внешним периметром -->
-                    <div class="min-w-[340px] max-w-[480px] mx-auto" id="interactiveTextGridContainer">
+                    <div class="w-full max-w-[480px] mx-auto overflow-x-auto pb-0.5" id="interactiveTextGridContainer">
                         <!-- Будет динамически построено: верхний периметр, сетка 3x3 с боковыми периметрами, нижний периметр -->
                     </div>
                 </div>
@@ -1041,7 +1051,7 @@
             return '';
         }
 
-        function analyzePillarGlobalMerge(stem, branch, palaceByNum, pDyn, pillarType) {
+        function analyzePillarGlobalMerge(stem, branch, palaceByNum, pDyn, pillarType, customXunShou) {
             const matches = {
                 assembledBottom: [],
                 splitTop: [],
@@ -1055,8 +1065,25 @@
             };
             if (!stem || !branch || !palaceByNum || !pDyn) return matches;
 
+            const xunStr = customXunShou || ((typeof currentChart !== 'undefined' && currentChart && currentChart.xunShou) ? currentChart.xunShou : '');
+            const jiaLeader = (xunStr && xunStr.length >= 3) ? xunStr.slice(-1) : '戊';
+
             const sMerge = STEM_MERGE[stem] || stem;
             const bMerge = BRANCH_MERGE[branch] || branch;
+
+            // Hidden Jia (甲) rule for the 甲 ↔ 己 pair:
+            // 1. If pillar stem is 己: merge partner is 甲. In the chart, 甲 hides behind jiaLeader.
+            //    Target stem on chart is jiaLeader; displayed as "甲 [${jiaLeader}]".
+            // 2. If pillar stem is 甲: pillar's own stem is 甲, manifesting on chart as jiaLeader.
+            //    Target stem on chart is jiaLeader; displayed as "甲 [${jiaLeader}]".
+            const isStemJia = (stem === '甲');
+            const isMergeJia = (sMerge === '甲');
+
+            const targetStem = isStemJia ? jiaLeader : stem;
+            const displayStem = isStemJia ? `甲 [${jiaLeader}]` : stem;
+
+            const targetSMerge = isMergeJia ? jiaLeader : sMerge;
+            const displaySMerge = isMergeJia ? `甲 [${jiaLeader}]` : sMerge;
 
             // Prefix labels according to temporal interval with correct Russian grammar
             let stemPrefix = '';
@@ -1111,17 +1138,17 @@
             const stemInPalace6 = (palaceByNum && palaceByNum[6]) ? (palaceByNum[6].outer_stem || '') : '';
             const stemInPalace2 = (palaceByNum && palaceByNum[2]) ? (palaceByNum[2].outer_stem || '') : '';
 
-            function addMatch(category, iconType, palaces, palaceType, tokens, text, targetStem) {
+            function addMatch(category, iconType, palaces, palaceType, tokens, text, matchStem) {
                 // Determine involvement of Palace 6 (Tian Xin) and Palace 2 (Tian Rui)
                 const touches6 = palaces.includes(6) || 
                                  (palaceOfTianXin && palaces.includes(palaceOfTianXin)) ||
                                  tokens.some(t => t.palace === 6 || t.palace === palaceOfTianXin) ||
-                                 (targetStem && stemInPalace6 && stemInPalace6.includes(targetStem));
+                                 (matchStem && stemInPalace6 && stemInPalace6.includes(matchStem));
 
                 const touches2 = palaces.includes(2) || 
                                  (palaceOfTianRui && palaces.includes(palaceOfTianRui)) ||
                                  tokens.some(t => t.palace === 2 || t.palace === palaceOfTianRui) ||
-                                 (targetStem && stemInPalace2 && stemInPalace2.includes(targetStem));
+                                 (matchStem && stemInPalace2 && stemInPalace2.includes(matchStem));
 
                 if (touches6) matches.hasTianXin = true;
                 if (touches2) matches.hasTianRui = true;
@@ -1129,10 +1156,10 @@
                 // Badges for Tian Xin and Tian Rui
                 const starBadges = [];
                 if (touches6) {
-                    starBadges.push(`<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10.5px] font-extrabold bg-blue-100 text-blue-900 border border-blue-300 shadow-2xs whitespace-nowrap" title="Задействован Дворец #6 (Цянь) или Звезда Тянь Синь [心]">🏛️#6 心</span>`);
+                    starBadges.push(`<span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-900 border border-blue-200 whitespace-nowrap" title="Задействован Дворец #6 (Цянь) или Звезда Тянь Синь [心]">#6心</span>`);
                 }
                 if (touches2) {
-                    starBadges.push(`<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10.5px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs whitespace-nowrap" title="Задействован Дворец #2 (Кунь) или Звезда Тянь Жуй [芮]">🏛️#2 芮</span>`);
+                    starBadges.push(`<span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200 whitespace-nowrap" title="Задействован Дворец #2 (Кунь) или Звезда Тянь Жуй [芮]">#2芮</span>`);
                 }
 
                 const item = {
@@ -1167,21 +1194,21 @@
                 if (!pal) continue;
                 const locs = [];
                 const tokens = [];
-                if (pal.inner_stem && pal.inner_stem.includes(sMerge)) {
+                if (pal.inner_stem && pal.inner_stem.includes(targetSMerge)) {
                     locs.push('Земле');
-                    tokens.push({ palace: pNum, role: 'inner_stem', val: sMerge, hitClass: 'q-token-hit-assembled' });
+                    tokens.push({ palace: pNum, role: 'inner_stem', val: targetSMerge, hitClass: 'q-token-hit-assembled' });
                 }
-                if (pal.door_home_stem && pal.door_home_stem.includes(sMerge)) {
+                if (pal.door_home_stem && pal.door_home_stem.includes(targetSMerge)) {
                     locs.push(`Вратах [${pal.gate}]`);
-                    tokens.push({ palace: pNum, role: 'door_home_stem', val: sMerge, hitClass: 'q-token-hit-assembled' });
+                    tokens.push({ palace: pNum, role: 'door_home_stem', val: targetSMerge, hitClass: 'q-token-hit-assembled' });
                 }
                 if (locs.length > 0) {
                     const bTypes = [];
                     if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
                     if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-assembled' });
-                    const text = `<b>Собранность (Внизу):</b> ${stemPrefix}Люхэ-ствол <b>${sMerge}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ${branchGenPrefix}ветви <b>${branch}</b> (${bTypes.join(', ')})`;
-                    addMatch('assembled_bottom', 'full_green', [pNum], 'assembled', tokens, text, sMerge);
+                    const text = `<b>Собранность (Внизу):</b> ${stemPrefix}Люхэ-ствол <b>${displaySMerge}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ${branchGenPrefix}ветви <b>${branch}</b> (${bTypes.join(', ')})`;
+                    addMatch('assembled_bottom', 'full_green', [pNum], 'assembled', tokens, text, targetSMerge);
                 }
             }
 
@@ -1191,27 +1218,23 @@
                 if (!pal) continue;
                 const locs = [];
                 const tokens = [];
-                if (pal.inner_stem && pal.inner_stem.includes(stem)) {
+                if (pal.inner_stem && pal.inner_stem.includes(targetStem)) {
                     locs.push('Земле');
-                    tokens.push({ palace: pNum, role: 'inner_stem', val: stem, hitClass: 'q-token-hit-assembled' });
+                    tokens.push({ palace: pNum, role: 'inner_stem', val: targetStem, hitClass: 'q-token-hit-assembled' });
                 }
-                if (pal.door_home_stem && pal.door_home_stem.includes(stem)) {
+                if (pal.door_home_stem && pal.door_home_stem.includes(targetStem)) {
                     locs.push(`Вратах [${pal.gate}]`);
-                    tokens.push({ palace: pNum, role: 'door_home_stem', val: stem, hitClass: 'q-token-hit-assembled' });
+                    tokens.push({ palace: pNum, role: 'door_home_stem', val: targetStem, hitClass: 'q-token-hit-assembled' });
                 }
                 if (locs.length > 0) {
                     const bmTypes = [];
                     if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
                     if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-assembled' });
-                    const text = `<b>Собранность (Внизу):</b> ${stemPrefix}ствол <b>${stem}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ветви Люхэ <b>${bMerge}</b> (${bmTypes.join(', ')})`;
-                    addMatch('assembled_bottom', 'full_green', [pNum], 'assembled', tokens, text, stem);
+                    const text = `<b>Собранность (Внизу):</b> ${stemPrefix}ствол <b>${displayStem}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ветви Люхэ <b>${bMerge}</b> (${bmTypes.join(', ')})`;
+                    addMatch('assembled_bottom', 'full_green', [pNum], 'assembled', tokens, text, targetStem);
                 }
             }
-
-            /* Временно отключено: поиск дополнительного того же ствола (будет вводиться постепенно)
-            // if (hasProperBottom_B && !hasProperBottom_Bm) { ... }
-            */
 
             // ==========================================
             // 2. SPLIT TOP (Небо/Звезда напротив ветви)
@@ -1223,21 +1246,21 @@
                 if (!oppPal) continue;
                 const locs = [];
                 const tokens = [];
-                if (oppPal.outer_stem && oppPal.outer_stem.includes(sMerge)) {
+                if (oppPal.outer_stem && oppPal.outer_stem.includes(targetSMerge)) {
                     locs.push('Небе');
-                    tokens.push({ palace: oppNum, role: 'outer_stem', val: sMerge, hitClass: 'q-token-hit-split' });
+                    tokens.push({ palace: oppNum, role: 'outer_stem', val: targetSMerge, hitClass: 'q-token-hit-split' });
                 }
-                if (oppPal.star_home_stem && oppPal.star_home_stem.includes(sMerge)) {
+                if (oppPal.star_home_stem && oppPal.star_home_stem.includes(targetSMerge)) {
                     locs.push(`Звезде [${oppPal.star}]`);
-                    tokens.push({ palace: oppNum, role: 'star_home_stem', val: sMerge, hitClass: 'q-token-hit-split' });
+                    tokens.push({ palace: oppNum, role: 'star_home_stem', val: targetSMerge, hitClass: 'q-token-hit-split' });
                 }
                 if (locs.length > 0) {
                     const bTypes = [];
                     if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
                     if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-split' });
-                    const text = `<b>Раскол (Вверху):</b> ${branchNomPrefix}ветвь <b>${branch}</b> во Дв. #${pNum} (${bTypes.join(', ')}) ↔ ${stemPrefix}Люхэ-ствол <b>${sMerge}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
-                    addMatch('split_top', 'full_red', [pNum, oppNum], 'split', tokens, text, sMerge);
+                    const text = `<b>Раскол (Вверху):</b> ${branchNomPrefix}ветвь <b>${branch}</b> во Дв. #${pNum} (${bTypes.join(', ')}) ↔ ${stemPrefix}Люхэ-ствол <b>${displaySMerge}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
+                    addMatch('split_top', 'full_red', [pNum, oppNum], 'split', tokens, text, targetSMerge);
                 }
             }
 
@@ -1248,25 +1271,23 @@
                 if (!oppPal) continue;
                 const locs = [];
                 const tokens = [];
-                if (oppPal.outer_stem && oppPal.outer_stem.includes(stem)) {
+                if (oppPal.outer_stem && oppPal.outer_stem.includes(targetStem)) {
                     locs.push('Небе');
-                    tokens.push({ palace: oppNum, role: 'outer_stem', val: stem, hitClass: 'q-token-hit-split' });
+                    tokens.push({ palace: oppNum, role: 'outer_stem', val: targetStem, hitClass: 'q-token-hit-split' });
                 }
-                if (oppPal.star_home_stem && oppPal.star_home_stem.includes(stem)) {
+                if (oppPal.star_home_stem && oppPal.star_home_stem.includes(targetStem)) {
                     locs.push(`Звезде [${oppPal.star}]`);
-                    tokens.push({ palace: oppNum, role: 'star_home_stem', val: stem, hitClass: 'q-token-hit-split' });
+                    tokens.push({ palace: oppNum, role: 'star_home_stem', val: targetStem, hitClass: 'q-token-hit-split' });
                 }
                 if (locs.length > 0) {
                     const bmTypes = [];
                     if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
                     if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-split' });
-                    const text = `<b>Раскол (Вверху):</b> ветвь Люхэ <b>${bMerge}</b> во Дв. #${pNum} (${bmTypes.join(', ')}) ↔ ${stemPrefix}ствол <b>${stem}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
-                    addMatch('split_top', 'full_red', [pNum, oppNum], 'split', tokens, text, stem);
+                    const text = `<b>Раскол (Вверху):</b> ветвь Люхэ <b>${bMerge}</b> во Дв. #${pNum} (${bmTypes.join(', ')}) ↔ ${stemPrefix}ствол <b>${displayStem}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
+                    addMatch('split_top', 'full_red', [pNum, oppNum], 'split', tokens, text, targetStem);
                 }
             }
-
-            /* Временно отключено: дополнительный тот же ствол вверху */
 
             // ==========================================
             // 3. ASSEMBLED TOP (Небо/Звезда во дворце ветви)
@@ -1277,21 +1298,21 @@
                 if (!pal) continue;
                 const locs = [];
                 const tokens = [];
-                if (pal.outer_stem && pal.outer_stem.includes(sMerge)) {
+                if (pal.outer_stem && pal.outer_stem.includes(targetSMerge)) {
                     locs.push('Небе');
-                    tokens.push({ palace: pNum, role: 'outer_stem', val: sMerge, hitClass: 'q-token-hit-split' });
+                    tokens.push({ palace: pNum, role: 'outer_stem', val: targetSMerge, hitClass: 'q-token-hit-split' });
                 }
-                if (pal.star_home_stem && pal.star_home_stem.includes(sMerge)) {
+                if (pal.star_home_stem && pal.star_home_stem.includes(targetSMerge)) {
                     locs.push(`Звезде [${pal.star}]`);
-                    tokens.push({ palace: pNum, role: 'star_home_stem', val: sMerge, hitClass: 'q-token-hit-split' });
+                    tokens.push({ palace: pNum, role: 'star_home_stem', val: targetSMerge, hitClass: 'q-token-hit-split' });
                 }
                 if (locs.length > 0) {
                     const bTypes = [];
                     if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
                     if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-split' });
-                    const text = `<b>Собранность (Вверху):</b> ${stemPrefix}Люхэ-ствол <b>${sMerge}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ${branchGenPrefix}ветви <b>${branch}</b> (${bTypes.join(', ')})`;
-                    addMatch('assembled_top', 'top_red_half', [pNum], 'split', tokens, text, sMerge);
+                    const text = `<b>Собранность (Вверху):</b> ${stemPrefix}Люхэ-ствол <b>${displaySMerge}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ${branchGenPrefix}ветви <b>${branch}</b> (${bTypes.join(', ')})`;
+                    addMatch('assembled_top', 'top_red_half', [pNum], 'split', tokens, text, targetSMerge);
                 }
             }
 
@@ -1301,25 +1322,23 @@
                 if (!pal) continue;
                 const locs = [];
                 const tokens = [];
-                if (pal.outer_stem && pal.outer_stem.includes(stem)) {
+                if (pal.outer_stem && pal.outer_stem.includes(targetStem)) {
                     locs.push('Небе');
-                    tokens.push({ palace: pNum, role: 'outer_stem', val: stem, hitClass: 'q-token-hit-split' });
+                    tokens.push({ palace: pNum, role: 'outer_stem', val: targetStem, hitClass: 'q-token-hit-split' });
                 }
-                if (pal.star_home_stem && pal.star_home_stem.includes(stem)) {
+                if (pal.star_home_stem && pal.star_home_stem.includes(targetStem)) {
                     locs.push(`Звезде [${pal.star}]`);
-                    tokens.push({ palace: pNum, role: 'star_home_stem', val: stem, hitClass: 'q-token-hit-split' });
+                    tokens.push({ palace: pNum, role: 'star_home_stem', val: targetStem, hitClass: 'q-token-hit-split' });
                 }
                 if (locs.length > 0) {
                     const bmTypes = [];
                     if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
                     if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-split' });
-                    const text = `<b>Собранность (Вверху):</b> ${stemPrefix}ствол <b>${stem}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ветви Люхэ <b>${bMerge}</b> (${bmTypes.join(', ')})`;
-                    addMatch('assembled_top', 'top_red_half', [pNum], 'split', tokens, text, stem);
+                    const text = `<b>Собранность (Вверху):</b> ${stemPrefix}ствол <b>${displayStem}</b> на ${locs.join('/')} во Дв. #${pNum} в доме ветви Люхэ <b>${bMerge}</b> (${bmTypes.join(', ')})`;
+                    addMatch('assembled_top', 'top_red_half', [pNum], 'split', tokens, text, targetStem);
                 }
             }
-
-            /* Временно отключено: дополнительный тот же ствол вверху */
 
             // ==========================================
             // 4. SPLIT BOTTOM (Земля/Врата напротив ветви)
@@ -1331,21 +1350,21 @@
                 if (!oppPal) continue;
                 const locs = [];
                 const tokens = [];
-                if (oppPal.inner_stem && oppPal.inner_stem.includes(sMerge)) {
+                if (oppPal.inner_stem && oppPal.inner_stem.includes(targetSMerge)) {
                     locs.push('Земле');
-                    tokens.push({ palace: oppNum, role: 'inner_stem', val: sMerge, hitClass: 'q-token-hit-assembled' });
+                    tokens.push({ palace: oppNum, role: 'inner_stem', val: targetSMerge, hitClass: 'q-token-hit-assembled' });
                 }
-                if (oppPal.door_home_stem && oppPal.door_home_stem.includes(sMerge)) {
+                if (oppPal.door_home_stem && oppPal.door_home_stem.includes(targetSMerge)) {
                     locs.push(`Вратах [${oppPal.gate}]`);
-                    tokens.push({ palace: oppNum, role: 'door_home_stem', val: sMerge, hitClass: 'q-token-hit-assembled' });
+                    tokens.push({ palace: oppNum, role: 'door_home_stem', val: targetSMerge, hitClass: 'q-token-hit-assembled' });
                 }
                 if (locs.length > 0) {
                     const bTypes = [];
                     if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
                     if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-assembled' });
-                    const text = `<b>Раскол (Внизу):</b> ${branchNomPrefix}ветвь <b>${branch}</b> во Дв. #${pNum} (${bTypes.join(', ')}) ↔ ${stemPrefix}Люхэ-ствол <b>${sMerge}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
-                    addMatch('split_bottom', 'bottom_green_half', [pNum, oppNum], 'assembled', tokens, text, sMerge);
+                    const text = `<b>Раскол (Внизу):</b> ${branchNomPrefix}ветвь <b>${branch}</b> во Дв. #${pNum} (${bTypes.join(', ')}) ↔ ${stemPrefix}Люхэ-ствол <b>${displaySMerge}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
+                    addMatch('split_bottom', 'bottom_green_half', [pNum, oppNum], 'assembled', tokens, text, targetSMerge);
                 }
             }
 
@@ -1356,25 +1375,23 @@
                 if (!oppPal) continue;
                 const locs = [];
                 const tokens = [];
-                if (oppPal.inner_stem && oppPal.inner_stem.includes(stem)) {
+                if (oppPal.inner_stem && oppPal.inner_stem.includes(targetStem)) {
                     locs.push('Земле');
-                    tokens.push({ palace: oppNum, role: 'inner_stem', val: stem, hitClass: 'q-token-hit-assembled' });
+                    tokens.push({ palace: oppNum, role: 'inner_stem', val: targetStem, hitClass: 'q-token-hit-assembled' });
                 }
-                if (oppPal.door_home_stem && oppPal.door_home_stem.includes(stem)) {
+                if (oppPal.door_home_stem && oppPal.door_home_stem.includes(targetStem)) {
                     locs.push(`Вратах [${oppPal.gate}]`);
-                    tokens.push({ palace: oppNum, role: 'door_home_stem', val: stem, hitClass: 'q-token-hit-assembled' });
+                    tokens.push({ palace: oppNum, role: 'door_home_stem', val: targetStem, hitClass: 'q-token-hit-assembled' });
                 }
                 if (locs.length > 0) {
                     const bmTypes = [];
                     if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
                     if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-assembled' });
-                    const text = `<b>Раскол (Внизу):</b> ветвь Люхэ <b>${bMerge}</b> во Дв. #${pNum} (${bmTypes.join(', ')}) ↔ ${stemPrefix}ствол <b>${stem}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
-                    addMatch('split_bottom', 'bottom_green_half', [pNum, oppNum], 'assembled', tokens, text, stem);
+                    const text = `<b>Раскол (Внизу):</b> ветвь Люхэ <b>${bMerge}</b> во Дв. #${pNum} (${bmTypes.join(', ')}) ↔ ${stemPrefix}ствол <b>${displayStem}</b> напротив во Дв. #${oppNum} на ${locs.join('/')}`;
+                    addMatch('split_bottom', 'bottom_green_half', [pNum, oppNum], 'assembled', tokens, text, targetStem);
                 }
             }
-
-            /* Временно отключено: дополнительный тот же ствол внизу */
 
             // ==========================================
             // 5. ASSEMBLED PERIMETER (Внешний ствол над ветвью)
@@ -1382,31 +1399,31 @@
             for (const pNum of bAllPalaces) {
                 const pal = palaceByNum[pNum];
                 if (!pal || !pal.perim_stem) continue;
-                if (pal.perim_stem.includes(sMerge)) {
+                if (pal.perim_stem.includes(targetSMerge)) {
                     const bTypes = [];
                     const tokens = [
-                        { palace: pNum, role: 'perim_stem', val: sMerge, hitClass: 'q-token-hit-hollow-green' }
+                        { palace: pNum, role: 'perim_stem', val: targetSMerge, hitClass: 'q-token-hit-hollow-green' }
                     ];
                     if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
                     if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-hollow-green' });
-                    const text = `<b>Собранность внешнего ствола:</b> ${stemPrefix}Люхэ-внешний ствол <b>${sMerge}</b> над Дв. #${pNum} в доме ${branchGenPrefix}ветви <b>${branch}</b> (${bTypes.join(', ')})`;
-                    addMatch('assembled_perim', 'hollow_green', [pNum], 'assembled', tokens, text, sMerge);
+                    const text = `<b>Собранность внешнего ствола:</b> ${stemPrefix}Люхэ-внешний ствол <b>${displaySMerge}</b> над Дв. #${pNum} в доме ${branchGenPrefix}ветви <b>${branch}</b> (${bTypes.join(', ')})`;
+                    addMatch('assembled_perim', 'hollow_green', [pNum], 'assembled', tokens, text, targetSMerge);
                 }
             }
             for (const pNum of bmAllPalaces) {
                 const pal = palaceByNum[pNum];
                 if (!pal || !pal.perim_stem) continue;
-                if (pal.perim_stem.includes(stem)) {
+                if (pal.perim_stem.includes(targetStem)) {
                     const bmTypes = [];
                     const tokens = [
-                        { palace: pNum, role: 'perim_stem', val: stem, hitClass: 'q-token-hit-hollow-green' }
+                        { palace: pNum, role: 'perim_stem', val: targetStem, hitClass: 'q-token-hit-hollow-green' }
                     ];
                     if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
                     if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-hollow-green' });
-                    const text = `<b>Собранность внешнего ствола:</b> ${stemPrefix}внешний ствол <b>${stem}</b> над Дв. #${pNum} в доме ветви Люхэ <b>${bMerge}</b> (${bmTypes.join(', ')})`;
-                    addMatch('assembled_perim', 'hollow_green', [pNum], 'assembled', tokens, text, stem);
+                    const text = `<b>Собранность внешнего ствола:</b> ${stemPrefix}внешний ствол <b>${displayStem}</b> над Дв. #${pNum} в доме ветви Люхэ <b>${bMerge}</b> (${bmTypes.join(', ')})`;
+                    addMatch('assembled_perim', 'hollow_green', [pNum], 'assembled', tokens, text, targetStem);
                 }
             }
 
@@ -1417,32 +1434,32 @@
                 const oppNum = OPPOSITE_PALACE[pNum];
                 const oppPal = palaceByNum[oppNum];
                 if (!oppPal || !oppPal.perim_stem) continue;
-                if (oppPal.perim_stem.includes(sMerge)) {
+                if (oppPal.perim_stem.includes(targetSMerge)) {
                     const bTypes = [];
                     const tokens = [
-                        { palace: oppNum, role: 'perim_stem', val: sMerge, hitClass: 'q-token-hit-hollow-red' }
+                        { palace: oppNum, role: 'perim_stem', val: targetSMerge, hitClass: 'q-token-hit-hollow-red' }
                     ];
                     if (bStatPalaces.includes(pNum)) bTypes.push(`статика #${pNum}`);
                     if (bDynPalaces.includes(pNum)) bTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: branch, hitClass: 'q-token-hit-hollow-red' });
-                    const text = `<b>Раскол внешнего ствола:</b> ${branchNomPrefix}ветвь <b>${branch}</b> во Дв. #${pNum} (${bTypes.join(', ')}) ↔ ${stemPrefix}Люхэ-внешний ствол <b>${sMerge}</b> напротив над Дв. #${oppNum}`;
-                    addMatch('split_perim', 'hollow_red', [pNum, oppNum], 'split', tokens, text, sMerge);
+                    const text = `<b>Раскол внешнего ствола:</b> ${branchNomPrefix}ветвь <b>${branch}</b> во Дв. #${pNum} (${bTypes.join(', ')}) ↔ ${stemPrefix}Люхэ-внешний ствол <b>${displaySMerge}</b> напротив над Дв. #${oppNum}`;
+                    addMatch('split_perim', 'hollow_red', [pNum, oppNum], 'split', tokens, text, targetSMerge);
                 }
             }
             for (const pNum of bmAllPalaces) {
                 const oppNum = OPPOSITE_PALACE[pNum];
                 const oppPal = palaceByNum[oppNum];
                 if (!oppPal || !oppPal.perim_stem) continue;
-                if (oppPal.perim_stem.includes(stem)) {
+                if (oppPal.perim_stem.includes(targetStem)) {
                     const bmTypes = [];
                     const tokens = [
-                        { palace: oppNum, role: 'perim_stem', val: stem, hitClass: 'q-token-hit-hollow-red' }
+                        { palace: oppNum, role: 'perim_stem', val: targetStem, hitClass: 'q-token-hit-hollow-red' }
                     ];
                     if (bmStatPalaces.includes(pNum)) bmTypes.push(`статика #${pNum}`);
                     if (bmDynPalaces.includes(pNum)) bmTypes.push(`периметр над #${pNum}`);
                     tokens.push({ palace: pNum, role: bmDynPalaces.includes(pNum) ? 'perim_branch' : 'static_branch', val: bMerge, hitClass: 'q-token-hit-hollow-red' });
-                    const text = `<b>Раскол внешнего ствола:</b> ветвь Люхэ <b>${bMerge}</b> во Дв. #${pNum} (${bmTypes.join(', ')}) ↔ ${stemPrefix}внешний ствол <b>${stem}</b> напротив над Дв. #${oppNum}`;
-                    addMatch('split_perim', 'hollow_red', [pNum, oppNum], 'split', tokens, text, stem);
+                    const text = `<b>Раскол внешнего ствола:</b> ветвь Люхэ <b>${bMerge}</b> во Дв. #${pNum} (${bmTypes.join(', ')}) ↔ ${stemPrefix}внешний ствол <b>${displayStem}</b> напротив над Дв. #${oppNum}`;
+                    addMatch('split_perim', 'hollow_red', [pNum, oppNum], 'split', tokens, text, targetStem);
                 }
             }
 
@@ -1478,12 +1495,12 @@
                 badges.push(`<span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[11px] font-bold bg-rose-50/60 text-rose-800 border border-rose-300" title="Раскол внешнего ствола">${renderResonanceIcon('hollow_red')} ${match.splitPerim.length}</span>`);
             }
 
-            // Special indicators for Palace 6 (Tian Xin) and Palace 2 (Tian Rui)
+            // Special indicators for Palace 6 (Tian Xin) and Palace 2 (Tian Rui) — identical size to resonance badges
             if (match.hasTianXin) {
-                badges.push(`<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-blue-100 text-blue-900 border border-blue-300 shadow-2xs whitespace-nowrap" title="Задействован Дворец #6 (Цянь) или Звезда Тянь Синь [心]">#6心</span>`);
+                badges.push(`<span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-900 border border-blue-200" title="Задействован Дворец #6 (Цянь) или Звезда Тянь Синь [心]">#6心</span>`);
             }
             if (match.hasTianRui) {
-                badges.push(`<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs whitespace-nowrap" title="Задействован Дворец #2 (Кунь) или Звезда Тянь Жуй [芮]">#2芮</span>`);
+                badges.push(`<span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200" title="Задействован Дворец #2 (Кунь) или Звезда Тянь Жуй [芮]">#2芮</span>`);
             }
 
             return badges.join(' ');
@@ -1554,35 +1571,35 @@
                 const statBranches = (PALACE_BRANCHES[pNum] || []).join('');
 
                 return `
-                    <div id="palace-cell-${pNum}" class="bg-white p-1 sm:p-1.5 flex flex-col justify-between transition-all select-none border border-gray-100">
+                    <div id="palace-cell-${pNum}" class="bg-white p-0.5 sm:p-1.5 flex flex-col justify-between transition-all select-none border border-gray-100 min-w-0 overflow-hidden">
                         <!-- Верхняя строка: Дух, Статическая ветвь, Номер дворца + Звезда Цянь/Кунь -->
-                        <div class="flex items-center justify-between text-xs pb-0.5 border-b border-gray-100">
-                            <span class="q-token text-red-600 font-bold text-xs sm:text-sm" onclick="onChartTokenClick(this)" data-type="spirit" data-palace="${pNum}" data-val="${pal.spirit}">${pal.spirit || '&nbsp;'}</span>
-                            <span class="q-token text-red-500 font-bold text-[11px]" onclick="onChartTokenClick(this)" data-type="static_branch" data-palace="${pNum}" data-val="${statBranches}">${statBranches}</span>
-                            ${pNum === 6 ? '<span class="text-[9.5px] font-bold text-blue-700 font-mono bg-blue-50 px-1 rounded border border-blue-200" title="Дворец #6 (Цянь) — Дом Звезды Тянь Синь">#6 心</span>' :
-                              pNum === 2 ? '<span class="text-[9.5px] font-bold text-amber-700 font-mono bg-amber-50 px-1 rounded border border-amber-200" title="Дворец #2 (Кунь) — Дом Звезды Тянь Жуй">#2 芮</span>' :
-                              `<span class="text-[10px] text-gray-400 font-mono">#${pNum}</span>`}
+                        <div class="flex items-center justify-between text-[11px] sm:text-xs pb-0.5 border-b border-gray-100 min-w-0">
+                            <span class="q-token text-red-600 font-bold text-xs sm:text-sm truncate" onclick="onChartTokenClick(this)" data-type="spirit" data-palace="${pNum}" data-val="${pal.spirit}">${pal.spirit || '&nbsp;'}</span>
+                            <span class="q-token text-red-500 font-bold text-[10px] sm:text-[11px] shrink-0" onclick="onChartTokenClick(this)" data-type="static_branch" data-palace="${pNum}" data-val="${statBranches}">${statBranches}</span>
+                            ${pNum === 6 ? '<span class="text-[9px] sm:text-[9.5px] font-bold text-blue-700 font-mono bg-blue-50 px-0.5 sm:px-1 rounded border border-blue-200 shrink-0" title="Дворец #6 (Цянь) — Дом Звезды Тянь Синь">#6心</span>' :
+                              pNum === 2 ? '<span class="text-[9px] sm:text-[9.5px] font-bold text-amber-700 font-mono bg-amber-50 px-0.5 sm:px-1 rounded border border-amber-200 shrink-0" title="Дворец #2 (Кунь) — Дом Звезды Тянь Жуй">#2芮</span>' :
+                              `<span class="text-[9px] sm:text-[10px] text-gray-400 font-mono shrink-0">#${pNum}</span>`}
                         </div>
 
                         <!-- Средняя строка: Ствол Неба, Звезда и домашний ствол звезды в скобках -->
-                        <div class="flex items-center justify-between py-1">
-                            <span class="q-token text-gray-900 font-bold text-sm sm:text-base leading-none" onclick="onChartTokenClick(this)" data-type="outer_stem" data-palace="${pNum}" data-val="${pal.outer_stem}">${pal.outer_stem || '&nbsp;'}</span>
-                            <div class="flex items-center gap-0.5 leading-none">
+                        <div class="flex items-center justify-between py-0.5 sm:py-1 min-w-0">
+                            <span class="q-token text-gray-900 font-bold text-xs sm:text-base leading-none" onclick="onChartTokenClick(this)" data-type="outer_stem" data-palace="${pNum}" data-val="${pal.outer_stem}">${pal.outer_stem || '&nbsp;'}</span>
+                            <div class="flex items-center gap-0.5 leading-none shrink-0">
                                 <div class="flex items-center">
                                     <span class="q-token text-blue-700 font-bold text-xs sm:text-sm" onclick="onChartTokenClick(this)" data-type="star" data-palace="${pNum}" data-val="${pal.star}">${pal.star || ''}</span>
-                                    ${(pal.star === '心' && pNum !== 6) ? '<span class="text-[9px] px-1 rounded bg-blue-100 text-blue-800 font-bold ml-0.5" title="Звезда Тянь Синь в Дв. #' + pNum + '">⭐心</span>' : ''}
-                                    ${(pal.star === '芮' && pNum !== 2) ? '<span class="text-[9px] px-1 rounded bg-amber-100 text-amber-800 font-bold ml-0.5" title="Звезда Тянь Жуй в Дв. #' + pNum + '">⭐芮</span>' : ''}
+                                    ${(pal.star === '心' && pNum !== 6) ? '<span class="text-[8.5px] sm:text-[9px] px-0.5 sm:px-1 rounded bg-blue-100 text-blue-800 font-bold ml-0.5" title="Звезда Тянь Синь в Дв. #' + pNum + '">⭐心</span>' : ''}
+                                    ${(pal.star === '芮' && pNum !== 2) ? '<span class="text-[8.5px] sm:text-[9px] px-0.5 sm:px-1 rounded bg-amber-100 text-amber-800 font-bold ml-0.5" title="Звезда Тянь Жуй в Дв. #' + pNum + '">⭐芮</span>' : ''}
                                 </div>
-                                ${pal.star_home_stem ? `<span class="q-token text-emerald-700 font-bold text-[11px]" onclick="onChartTokenClick(this)" data-type="star_home_stem" data-palace="${pNum}" data-val="${pal.star_home_stem}">(${pal.star_home_stem})</span>` : ''}
+                                ${pal.star_home_stem ? `<span class="q-token text-emerald-700 font-bold text-[9.5px] sm:text-[11px]" onclick="onChartTokenClick(this)" data-type="star_home_stem" data-palace="${pNum}" data-val="${pal.star_home_stem}">(${pal.star_home_stem})</span>` : ''}
                             </div>
                         </div>
 
                         <!-- Нижняя строка: Ствол Земли, Врата и домашний ствол врат в скобках -->
-                        <div class="flex items-center justify-between pt-0.5 border-t border-gray-100">
-                            <span class="q-token text-gray-600 font-bold text-sm sm:text-base leading-none" onclick="onChartTokenClick(this)" data-type="inner_stem" data-palace="${pNum}" data-val="${pal.inner_stem}">${pal.inner_stem || '&nbsp;'}</span>
-                            <div class="flex items-center gap-0.5 leading-none">
+                        <div class="flex items-center justify-between pt-0.5 border-t border-gray-100 min-w-0">
+                            <span class="q-token text-gray-600 font-bold text-xs sm:text-base leading-none" onclick="onChartTokenClick(this)" data-type="inner_stem" data-palace="${pNum}" data-val="${pal.inner_stem}">${pal.inner_stem || '&nbsp;'}</span>
+                            <div class="flex items-center gap-0.5 leading-none shrink-0">
                                 <span class="q-token text-blue-700 font-bold text-xs sm:text-sm" onclick="onChartTokenClick(this)" data-type="gate" data-palace="${pNum}" data-val="${pal.gate}">${pal.gate || ''}</span>
-                                ${pal.door_home_stem ? `<span class="q-token text-emerald-700 font-bold text-[11px]" onclick="onChartTokenClick(this)" data-type="door_home_stem" data-palace="${pNum}" data-val="${pal.door_home_stem}">(${pal.door_home_stem})</span>` : ''}
+                                ${pal.door_home_stem ? `<span class="q-token text-emerald-700 font-bold text-[9.5px] sm:text-[11px]" onclick="onChartTokenClick(this)" data-type="door_home_stem" data-palace="${pNum}" data-val="${pal.door_home_stem}">(${pal.door_home_stem})</span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -2295,8 +2312,13 @@
             banner.classList.remove('hidden');
 
             if (type === 'outer_stem' || type === 'inner_stem' || type === 'star_home_stem' || type === 'door_home_stem' || type === 'perim_stem') {
+                const jiaLeader = (currentChart && currentChart.xunShou) ? currentChart.xunShou.slice(-1) : '戊';
                 const cleanStems = Array.from(val).filter(ch => STEMS.includes(ch));
-                const mergeStems = cleanStems.map(s => STEM_MERGE[s] || s);
+                const mergeStems = cleanStems.map(s => {
+                    if (s === '己') return `甲 [${jiaLeader}]`;
+                    if (s === '甲') return '己';
+                    return STEM_MERGE[s] || s;
+                });
                 const stemTypeLabel = (type === 'perim_stem') ? 'Внешний ствол' :
                                       (type === 'outer_stem') ? 'Ствол Неба' :
                                       (type === 'inner_stem') ? 'Ствол Земли' :
