@@ -16,6 +16,8 @@ import io
 import time
 import argparse
 import requests
+import threading
+import http.server
 from datetime import datetime, timezone, timedelta
 from PIL import Image, ImageDraw, ImageFont
 
@@ -297,7 +299,12 @@ def render_candlestick_chart_bytes(klines, coin, pillar_name, timeframe_name, ta
     buf.seek(0)
     return buf.getvalue(), pct_change, ref_price, exit_price, min_p, max_p
 
-def process_cron_tasks(bot_token, default_chat_id, firebase_url):
+def process_cron_tasks(bot_token, default_chat_id, firebase_url=None):
+    if not firebase_url or not str(firebase_url).startswith('http'):
+        firebase_url = DEFAULT_FIREBASE_URL
+    if not firebase_url.endswith('.json'):
+        firebase_url = firebase_url.rstrip('/') + '/qimen_cron_tasks.json'
+
     print(f"[{datetime.now(timezone.utc).isoformat()}] Fetching tasks from {firebase_url}...")
     try:
         r = requests.get(firebase_url, timeout=12)
@@ -365,7 +372,7 @@ def process_cron_tasks(bot_token, default_chat_id, firebase_url):
         target_pillar = task.get('targetPillar', '')
         timeframe = task.get('timeframe', 'minute')
         tf_label = tf_labels.get(timeframe, timeframe)
-        chat_id = task.get('chatId') or default_chat_id
+        chat_id = default_chat_id or task.get('chatId')
         cur_bot_token = task.get('botToken') or bot_token
         note = task.get('note', '')
 
@@ -385,13 +392,19 @@ def process_cron_tasks(bot_token, default_chat_id, firebase_url):
         # 1. ПРОВЕРКА АЛЕРТА
         if task.get('alertStatus') == 'pending':
             if alert_dt and now_utc >= alert_dt:
-                diff_min = max(int((target_dt - now_utc).total_seconds() / 60), 0)
+                diff_seconds = (target_dt - now_utc).total_seconds()
+                if diff_seconds > 0:
+                    diff_min = max(int(diff_seconds / 60), 1)
+                    time_info = f"через ~{diff_min} мин"
+                else:
+                    past_min = int(abs(diff_seconds) / 60)
+                    time_info = f"наступил ~{past_min} мин назад" if past_min > 0 else "наступил только что"
 
                 dir_str = f" {direction}" if direction else ""
                 lines = [
                     f"🔔 <b>[КРОН СИГНАЛ] {coin}{dir_str}</b>\n",
                     f"🎯 Столп: <b>{target_pillar}</b> ({tf_label})",
-                    f"⏰ Время начала: <b>{target_str}</b> (через ~{diff_min} мин)"
+                    f"⏰ Время начала: <b>{target_str}</b> ({time_info})"
                 ]
                 if task.get('isMerge'):
                     orig_stem = task.get('selectedStem', '')
@@ -512,6 +525,8 @@ def main():
     parser = argparse.ArgumentParser(description="Qimen Cron Worker for Alerts and Chart Tracking")
     parser.add_argument('--once', action='store_true', help="Run one pass and exit")
     parser.add_argument('--daemon', action='store_true', help="Run in continuous loop")
+    parser.add_argument('--web', action='store_true', help="Run web health check server with background daemon loop")
+    parser.add_argument('--port', type=int, default=None, help="Port for web server (defaults to PORT env or 10000)")
     parser.add_argument('--interval', type=int, default=30, help="Loop interval in seconds")
     parser.add_argument('--token', type=str, default=None, help="Telegram Bot Token")
     parser.add_argument('--chat-id', type=str, default=None, help="Telegram Cron Chat ID")
@@ -519,16 +534,62 @@ def main():
 
     args = parser.parse_args()
 
-    bot_token = args.token or os.environ.get('TELEGRAM_BOT_TOKEN', '')
-    chat_id = args.chat_id or os.environ.get('CRON_CHAT_ID', '')
-    firebase_url = args.firebase_url or os.environ.get('FIREBASE_URL', DEFAULT_FIREBASE_URL)
+    bot_token = (args.token or os.environ.get('TELEGRAM_BOT_TOKEN') or '').strip()
+    chat_id = (args.chat_id or os.environ.get('CRON_CHAT_ID') or '').strip()
+    raw_fb = (args.firebase_url or os.environ.get('FIREBASE_URL') or '').strip()
+    firebase_url = raw_fb if (raw_fb and raw_fb.startswith('http')) else DEFAULT_FIREBASE_URL
+    if not firebase_url.endswith('.json'):
+        firebase_url = firebase_url.rstrip('/') + '/qimen_cron_tasks.json'
 
-    print(f"Qimen Cron Worker initialized. Mode: {'ONCE' if args.once else 'DAEMON'}")
+    env_port = os.environ.get('PORT')
+    is_web_mode = args.web or (env_port is not None and not args.once)
 
     if args.once:
+        print("Qimen Cron Worker initialized. Mode: ONCE")
         processed = process_cron_tasks(bot_token, chat_id, firebase_url)
         print(f"Done. Processed/updated tasks: {processed}")
+    elif is_web_mode:
+        port = int(env_port or args.port or 10000)
+        print(f"Qimen Cron Worker initialized. Mode: WEB SERVICE (Port: {port})")
+
+        class HealthCheckHandler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.end_headers()
+                html = (
+                    "<html><body style='font-family:sans-serif;padding:30px;text-align:center;background:#f8fafc;'>"
+                    "<div style='max-width:420px;margin:auto;background:white;padding:24px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);'>"
+                    "<h2 style='color:#16a34a;margin-top:0;'>🟢 Qimen Cron Worker is Alive</h2>"
+                    f"<p style='color:#64748b;font-size:14px;'>Continuous background loop polling Firebase every {args.interval}s.</p>"
+                    "</div></body></html>"
+                )
+                self.wfile.write(html.encode('utf-8'))
+
+            def log_message(self, format, *args_log):
+                return
+
+        def daemon_loop():
+            print(f"Background daemon loop started. Polling Firebase every {args.interval}s.")
+            time.sleep(2)
+            while True:
+                try:
+                    process_cron_tasks(bot_token, chat_id, firebase_url)
+                except Exception as e:
+                    print(f"Cron loop error: {e}")
+                time.sleep(args.interval)
+
+        t = threading.Thread(target=daemon_loop, daemon=True, name="QimenCronDaemonThread")
+        t.start()
+
+        server = http.server.HTTPServer(('0.0.0.0', port), HealthCheckHandler)
+        print(f"HTTP health server listening on 0.0.0.0:{port}...")
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print("\nShutting down server.")
     else:
+        print(f"Qimen Cron Worker initialized. Mode: DAEMON (Interval: {args.interval}s)")
         print(f"Starting daemon loop every {args.interval} seconds. Press Ctrl+C to stop.")
         while True:
             try:
