@@ -74,13 +74,16 @@ def send_telegram_message(bot_token, chat_id, text):
         print(f"Telegram request failed: {e}")
         return False
 
-def send_telegram_photo(bot_token, chat_id, photo_bytes, caption):
+def send_telegram_photo(bot_token, chat_id, photo_bytes, caption=""):
     if not bot_token or not chat_id:
         print(f"Telegram bot token or chat ID missing. Skipping photo.")
         return False
     url = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
+    # Ограничение длины caption в Telegram sendPhoto - 1024 символа
+    if caption and len(caption) > 1024:
+        caption = caption[:1020] + "..."
     data = {
-        'chat_id': chat_id,
+        'chat_id': str(chat_id),
         'caption': caption,
         'parse_mode': 'HTML'
     }
@@ -101,48 +104,107 @@ def send_telegram_photo(bot_token, chat_id, photo_bytes, caption):
         return False
 
 def fetch_bybit_klines(symbol, interval, start_dt, end_dt):
-    coin_clean = symbol.upper().replace('USDT', '')
+    """
+    Отказоустойчивое получение свечей с мульти-биржевым шлюзом:
+    1. Bybit (api.bybit.com и api.bytick.com: linear и spot) с полноценным User-Agent
+    2. MEXC (api.mexc.com) - не блокирует IP облачных раннеров GitHub Actions / Azure
+    3. Gate.io (api.gateio.ws) - полный охват альткоинов и мемкоинов
+    4. Binance Vision (data-api.binance.vision) - выделенный дата-центр шлюз Binance
+    """
+    coin_clean = symbol.upper().replace('USDT', '').strip()
     symbol_usdt = coin_clean + 'USDT'
     start_ms = int(start_dt.timestamp() * 1000)
     end_ms = int(end_dt.timestamp() * 1000)
-
-    url = 'https://api.bybit.com/v5/market/kline'
-    params = {
-        'category': 'linear',
-        'symbol': symbol_usdt,
-        'interval': interval,
-        'start': start_ms,
-        'end': end_ms,
-        'limit': 1000
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'application/json'
     }
-    raw_list = []
-    try:
-        r = requests.get(url, params=params, timeout=12)
-        data = r.json()
-        raw_list = data.get('result', {}).get('list', [])
-        if not raw_list:
-            params['category'] = 'spot'
-            r = requests.get(url, params=params, timeout=12)
-            data = r.json()
-            raw_list = data.get('result', {}).get('list', [])
-    except Exception as e:
-        print(f"Bybit API request failed for {symbol_usdt}: {e}")
-        return []
 
-    klines = []
-    for item in reversed(raw_list):
-        try:
-            klines.append({
-                'time': int(item[0]),
-                'open': float(item[1]),
-                'high': float(item[2]),
-                'low': float(item[3]),
-                'close': float(item[4]),
-                'volume': float(item[5])
-            })
-        except (ValueError, IndexError):
-            continue
-    return klines
+    # 1. Bybit (bybit.com & bytick.com)
+    for host in ['api.bybit.com', 'api.bytick.com']:
+        for cat in ['linear', 'spot']:
+            try:
+                url = f'https://{host}/v5/market/kline'
+                params = {'category': cat, 'symbol': symbol_usdt, 'interval': str(interval), 'start': start_ms, 'end': end_ms, 'limit': 1000}
+                r = requests.get(url, params=params, headers=headers, timeout=6)
+                if r.status_code == 200:
+                    data = r.json()
+                    raw_list = data.get('result', {}).get('list', [])
+                    if raw_list:
+                        klines = []
+                        for item in reversed(raw_list):
+                            klines.append({
+                                'time': int(item[0]), 'open': float(item[1]), 'high': float(item[2]),
+                                'low': float(item[3]), 'close': float(item[4]), 'volume': float(item[5]) if len(item) > 5 else 0.0
+                            })
+                        if klines:
+                            return klines
+            except Exception:
+                pass
+
+    # 2. MEXC fallback
+    try:
+        mexc_interval = f'{interval}m' if str(interval).isdigit() else interval
+        url = 'https://api.mexc.com/api/v3/klines'
+        params = {'symbol': symbol_usdt, 'interval': mexc_interval, 'startTime': start_ms, 'endTime': end_ms, 'limit': 1000}
+        r = requests.get(url, params=params, headers=headers, timeout=6)
+        if r.status_code == 200:
+            raw_list = r.json()
+            if isinstance(raw_list, list) and raw_list:
+                klines = []
+                for item in raw_list:
+                    klines.append({
+                        'time': int(item[0]), 'open': float(item[1]), 'high': float(item[2]),
+                        'low': float(item[3]), 'close': float(item[4]), 'volume': float(item[5]) if len(item) > 5 else 0.0
+                    })
+                if klines:
+                    return klines
+    except Exception:
+        pass
+
+    # 3. Gate.io fallback
+    try:
+        gate_interval = f'{interval}m' if str(interval).isdigit() else interval
+        url = 'https://api.gateio.ws/api/v4/spot/candlesticks'
+        params = {'currency_pair': f'{coin_clean}_USDT', 'interval': gate_interval, 'from': int(start_ms/1000), 'to': int(end_ms/1000), 'limit': 1000}
+        r = requests.get(url, params=params, headers=headers, timeout=6)
+        if r.status_code == 200:
+            raw_list = r.json()
+            if isinstance(raw_list, list) and raw_list:
+                klines = []
+                for item in reversed(raw_list):
+                    # Gate.io: [timestamp_sec, volume, close, high, low, open, ...]
+                    klines.append({
+                        'time': int(item[0]) * 1000, 'open': float(item[5]), 'high': float(item[3]),
+                        'low': float(item[4]), 'close': float(item[2]), 'volume': float(item[1]) if len(item) > 1 else 0.0
+                    })
+                if klines:
+                    return klines
+    except Exception:
+        pass
+
+    # 4. Binance Vision fallback
+    try:
+        bin_interval = f'{interval}m' if str(interval).isdigit() else interval
+        url = 'https://data-api.binance.vision/api/v3/klines'
+        params = {'symbol': symbol_usdt, 'interval': bin_interval, 'startTime': start_ms, 'endTime': end_ms, 'limit': 1000}
+        r = requests.get(url, params=params, headers=headers, timeout=6)
+        if r.status_code == 200:
+            raw_list = r.json()
+            if isinstance(raw_list, list) and raw_list:
+                klines = []
+                for item in raw_list:
+                    klines.append({
+                        'time': int(item[0]), 'open': float(item[1]), 'high': float(item[2]),
+                        'low': float(item[3]), 'close': float(item[4]), 'volume': float(item[5]) if len(item) > 5 else 0.0
+                    })
+                if klines:
+                    return klines
+    except Exception:
+        pass
+
+    print(f"Warning: Could not fetch klines for {symbol_usdt} from any exchange source.")
+    return []
 
 def get_task_tz(task):
     tz_offset_min = task.get('tzOffset')
@@ -165,12 +227,34 @@ def render_candlestick_chart_bytes(klines, coin, pillar_name, timeframe_name, ta
     im = Image.new('RGB', (width, height), color=(15, 23, 42)) # Slate 900
     draw = ImageDraw.Draw(im)
 
-    try:
-        font_title = ImageFont.truetype("arial.ttf", 26)
-        font_bold = ImageFont.truetype("arialbd.ttf", 20)
-        font_main = ImageFont.truetype("arial.ttf", 16)
-        font_sm = ImageFont.truetype("arial.ttf", 13)
-    except Exception:
+    font_title = font_bold = font_main = font_sm = None
+    candidate_bold = [
+        "arialbd.ttf", "arial.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "DejaVuSans-Bold.ttf"
+    ]
+    candidate_main = [
+        "arial.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+        "DejaVuSans.ttf"
+    ]
+    for p in candidate_bold:
+        try:
+            font_title = ImageFont.truetype(p, 26)
+            font_bold = ImageFont.truetype(p, 20)
+            break
+        except Exception:
+            continue
+    for p in candidate_main:
+        try:
+            font_main = ImageFont.truetype(p, 16)
+            font_sm = ImageFont.truetype(p, 13)
+            break
+        except Exception:
+            continue
+    if not font_title:
         font_title = font_bold = font_main = font_sm = ImageFont.load_default()
 
     x_left = 40
@@ -423,8 +507,10 @@ def process_cron_tasks(bot_token, default_chat_id, firebase_url=None):
                     lines.append(f"📝 Заметка: <i>{note}</i>")
                 alert_text = "\n".join(lines)
 
-                # Проверяем, нужен ли график входа вместе с алертом
-                if task.get('entryChartEnabled'):
+                # Проверяем, нужен ли график входа вместе с алертом (только если галочка включена)
+                entry_chart_wanted = bool(task.get('entryChartEnabled'))
+                photo_sent = False
+                if entry_chart_wanted:
                     print(f"Generating entry chart for {coin} [{target_pillar}]...")
                     interval = '1' if timeframe == 'minute' else ('5' if timeframe == 'hour' else '15')
                     start_dt = target_dt - timedelta(minutes=45 if timeframe == 'minute' else 120)
@@ -433,28 +519,18 @@ def process_cron_tasks(bot_token, default_chat_id, firebase_url=None):
                         chart_res = render_candlestick_chart_bytes(candles, coin, target_pillar, tf_label, target_dt, is_entry_chart=True, direction=direction, user_tz=user_tz)
                         if chart_res:
                             img_bytes = chart_res[0]
-                            success = send_telegram_photo(cur_bot_token, chat_id, img_bytes, alert_text)
-                            if success:
-                                task_patch['alertStatus'] = 'sent'
-                                task_patch['entryChartStatus'] = 'sent'
-                                task_patch['alertSentAt'] = now_utc.isoformat()
-                                updated_count += 1
-                        else:
-                            success = send_telegram_message(cur_bot_token, chat_id, alert_text)
-                            if success:
-                                task_patch['alertStatus'] = 'sent'
-                                task_patch['alertSentAt'] = now_utc.isoformat()
-                                updated_count += 1
-                    else:
-                        success = send_telegram_message(cur_bot_token, chat_id, alert_text)
-                        if success:
-                            task_patch['alertStatus'] = 'sent'
-                            task_patch['alertSentAt'] = now_utc.isoformat()
-                            updated_count += 1
+                            photo_sent = send_telegram_photo(cur_bot_token, chat_id, img_bytes, alert_text)
+
+                if photo_sent:
+                    task_patch['alertStatus'] = 'sent'
+                    task_patch['entryChartStatus'] = 'sent'
+                    task_patch['alertSentAt'] = now_utc.isoformat()
+                    updated_count += 1
                 else:
-                    success = send_telegram_message(cur_bot_token, chat_id, alert_text)
-                    if success:
+                    msg_sent = send_telegram_message(cur_bot_token, chat_id, alert_text)
+                    if msg_sent:
                         task_patch['alertStatus'] = 'sent'
+                        task_patch['entryChartStatus'] = 'skipped' if not entry_chart_wanted else 'failed'
                         task_patch['alertSentAt'] = now_utc.isoformat()
                         updated_count += 1
 
@@ -503,13 +579,15 @@ def process_cron_tasks(bot_token, default_chat_id, firebase_url=None):
                             lines.append(f"📝 Заметка: <i>{note}</i>")
                         caption = "\n".join(lines)
                         success = send_telegram_photo(cur_bot_token, chat_id, img_bytes, caption)
+                        if not success:
+                            success = send_telegram_message(cur_bot_token, chat_id, caption)
                         if success:
                             task_patch['trackStatus'] = 'sent'
                             task_patch['trackSentAt'] = now_utc.isoformat()
                             task_patch['trackResultPct'] = pct_change
                             updated_count += 1
                 else:
-                    print(f"Warning: No candles fetched for {coin}")
+                    print(f"Warning: No candles fetched for {coin} at trackTime")
 
         if task_patch:
             patch_url = f"{base_rtdb}/{task_id}.json"
