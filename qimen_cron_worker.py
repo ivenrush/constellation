@@ -490,6 +490,8 @@ def process_cron_tasks(bot_token, default_chat_id, firebase_url=None):
                     f"🎯 Столп: <b>{target_pillar}</b> ({tf_label})",
                     f"⏰ Время начала: <b>{target_str}</b> ({time_info})"
                 ]
+                if task.get('radarRuleName'):
+                    lines.append(f"🛰️ Связка: <b>{task['radarRuleName']}</b>")
                 if task.get('isMerge'):
                     orig_stem = task.get('selectedStem', '')
                     lines.append(f"🔄 Слияние: от <b>{orig_stem}</b> к <b>{target_pillar[0]}</b>")
@@ -565,6 +567,8 @@ def process_cron_tasks(bot_token, default_chat_id, firebase_url=None):
                             f"📈 Итог: <b>{sign}{pct_change:.2f}%</b> (Вход: {p_entry:,.4f} ➔ Выход: {p_exit:,.4f})",
                             f"↕ High: {p_high:,.4f} | Low: {p_low:,.4f}"
                         ]
+                        if task.get('radarRuleName'):
+                            lines.append(f"🛰️ Связка: <b>{task['radarRuleName']}</b>")
                         reading_id = task.get('readingId')
                         source_tg_link = task.get('sourceTgLink')
                         if not source_tg_link and reading_id:
@@ -578,14 +582,29 @@ def process_cron_tasks(bot_token, default_chat_id, firebase_url=None):
                         if note:
                             lines.append(f"📝 Заметка: <i>{note}</i>")
                         caption = "\n".join(lines)
-                        success = send_telegram_photo(cur_bot_token, chat_id, img_bytes, caption)
-                        if not success:
-                            success = send_telegram_message(cur_bot_token, chat_id, caption)
-                        if success:
-                            task_patch['trackStatus'] = 'sent'
+                        silent_track = bool(task.get('silentTrack'))
+                        if silent_track or not cur_bot_token or not chat_id:
+                            task_patch['trackStatus'] = 'recorded'
                             task_patch['trackSentAt'] = now_utc.isoformat()
-                            task_patch['trackResultPct'] = pct_change
+                            task_patch['trackResultPct'] = round(pct_change, 3)
+                            task_patch['trackEntryPrice'] = p_entry
+                            task_patch['trackExitPrice'] = p_exit
+                            task_patch['trackLow'] = p_low
+                            task_patch['trackHigh'] = p_high
                             updated_count += 1
+                        else:
+                            success = send_telegram_photo(cur_bot_token, chat_id, img_bytes, caption)
+                            if not success:
+                                success = send_telegram_message(cur_bot_token, chat_id, caption)
+                            if success:
+                                task_patch['trackStatus'] = 'sent'
+                                task_patch['trackSentAt'] = now_utc.isoformat()
+                                task_patch['trackResultPct'] = round(pct_change, 3)
+                                task_patch['trackEntryPrice'] = p_entry
+                                task_patch['trackExitPrice'] = p_exit
+                                task_patch['trackLow'] = p_low
+                                task_patch['trackHigh'] = p_high
+                                updated_count += 1
                 else:
                     print(f"Warning: No candles fetched for {coin} at trackTime")
 
